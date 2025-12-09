@@ -12,44 +12,39 @@ export interface User {
   updatedAt?: string; // ISO timestamp
 }
 
-export type ItemStatus = "lost" | "found" | "claimed" | "returned";
+export type ItemStatus = "OPEN" | "CLAIMED" | "RESOLVED";
+export type ItemType = "LOST" | "FOUND";
 export type ItemCategory =
-  | "electronics"
-  | "id"
-  | "keys"
-  | "apparel"
-  | "documents"
-  | "other";
+  | "ELECTRONICS"
+  | "CLOTHING"
+  | "ID_CARDS"
+  | "KEYS"
+  | "OTHER";
 
 export interface Item {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
+  type: ItemType;
   category: ItemCategory;
   status: ItemStatus;
-  location: string;
-  campus?: string;
-  tags?: string[];
-  reportedBy: string; // user id
-  images?: string[];
-  occurredAt: string; // when lost/found
-  createdAt: string;
-  updatedAt: string;
-  claimId?: string;
+  location: string | null;
+  user_id: string;
+  image_url: string | null;
+  date_incident: string | null; // when lost/found
+  created_at: string;
+  updated_at: string;
 }
 
-export type ClaimStatus = "pending" | "approved" | "rejected" | "returned";
+export type ClaimStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface Claim {
   id: string;
-  itemId: string;
-  claimantId: string;
+  item_id: string;
+  claimant_id: string;
   status: ClaimStatus;
-  proofMessage?: string;
-  proofImages?: string[];
-  contactMethod?: "email" | "phone";
-  reviewedBy?: string; // admin id
-  createdAt: string;
-  updatedAt: string;
+  proof_description: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
