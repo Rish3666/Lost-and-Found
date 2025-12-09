@@ -1,146 +1,129 @@
-import { BadgeCheck, MapPin, Search, ShieldCheck, Upload } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, MapPin, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-const features = [
-  {
-    title: "Report in minutes",
-    description:
-      "Guided form for lost or found items with photos, location, and contact details.",
-    icon: Upload,
-  },
-  {
-    title: "Trust-first workflow",
-    description:
-      "SSO-ready auth, admin verification, and audit-friendly claim status history.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Smart discovery",
-    description:
-      "Search and filter by category, building, or date so items get back faster.",
-    icon: Search,
-  },
-];
-
-const quickStats = [
-  { label: "Avg. claim review", value: "< 2 hrs" },
-  { label: "Items returned", value: "94%" },
-  { label: "Live categories", value: "6+" },
+const recentItems = [
+  { title: "Blue Backpack", location: "Engineering Quad", note: "Contains laptop stickers" },
+  { title: "Student ID Card", location: "Main Library", note: "Name: Alex V." },
+  { title: "AirPods Case", location: "Cafeteria", note: "No earbuds inside" },
+  { title: "Black Hoodie", location: "Gym lockers", note: "Small logo on sleeve" },
 ];
 
 export default function Home() {
   return (
-    <div className="bg-gradient-to-b from-slate-50 via-white to-slate-100">
-      <main className="mx-auto max-w-6xl px-6 py-16 sm:px-10 lg:py-24">
-        <section className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,_#e2e8f033_0,_transparent_35%),radial-gradient(circle_at_20%_60%,_#0b2f6d11_0,_transparent_25%),radial-gradient(circle_at_80%_30%,_#f5c24222_0,_transparent_28%)]" />
+      <main className="relative mx-auto flex max-w-6xl flex-col gap-16 px-6 pb-20 pt-12 sm:px-10 lg:pt-16">
+        <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 backdrop-blur">
-              <BadgeCheck className="h-4 w-4 text-primary" />
-              Secure by design • Ready for campus
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-primary shadow-sm ring-1 ring-primary/20">
+              Campus portal
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Trusted by students
             </div>
             <div className="space-y-4">
               <h1 className="text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
-                University Lost &amp; Found Portal
+                Lost something on campus?
               </h1>
               <p className="max-w-2xl text-lg text-slate-700">
-                Report, track, and claim items with confidence. Purpose-built
-                for students, staff, and administrators to keep campus property
-                moving to the right hands.
+                The official student portal to report and track lost items.
+                Search recent finds or file a report in minutes.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                Report lost item
-              </button>
-              <button className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-semibold text-primary ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:ring-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-                View dashboard
-              </button>
+              <Button asChild>
+                <Link href="/items">I Lost Something</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/report">I Found Something</Link>
+              </Button>
             </div>
-            <div className="flex items-center gap-4 rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
-              <ShieldCheck className="h-10 w-10 text-primary" />
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Privacy-first storage &amp; audit trail
-                </p>
-                <p className="text-sm text-slate-600">
-                  Supabase-backed auth, row-level security, and admin approvals
-                  for every claim.
-                </p>
+            <div className="flex flex-col gap-3 rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur sm:flex-row sm:items-center sm:gap-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <Search className="h-4 w-4 text-primary" />
+                Search the inventory
+              </div>
+              <div className="flex flex-1 items-center gap-3">
+                <Input
+                  placeholder="Search for keys, id card, backpack..."
+                  aria-label="Search lost and found items"
+                />
+                <Button asChild variant="secondary" className="shrink-0">
+                  <Link href="/items">Search</Link>
+                </Button>
               </div>
             </div>
           </div>
 
-          <div className="space-y-6 rounded-3xl bg-white/90 p-6 shadow-xl ring-1 ring-slate-200 backdrop-blur">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4 rounded-3xl bg-white/95 p-6 shadow-xl ring-1 ring-slate-200 backdrop-blur">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <AlertCircle className="h-6 w-6" />
+              </div>
               <div>
-                <p className="text-sm font-semibold text-primary">Snapshot</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  Campus inventory health
+                <p className="text-sm font-semibold text-slate-900">
+                  Recently found on campus
+                </p>
+                <p className="text-sm text-slate-600">
+                  Items awaiting pickup or claim verification.
                 </p>
               </div>
-              <MapPin className="h-10 w-10 text-primary" />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {quickStats.map((stat) => (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {recentItems.map((item) => (
                 <div
-                  key={stat.label}
-                  className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200"
+                  key={item.title + item.location}
+                  className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 shadow-sm"
                 >
-                  <p className="text-sm text-slate-600">{stat.label}</p>
-                  <p className="text-2xl font-semibold text-slate-900">
-                    {stat.value}
-                  </p>
+                  <div className="aspect-[3/2] w-full rounded-xl bg-gradient-to-br from-slate-200 to-slate-100" />
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold text-slate-900">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      {item.location}
+                    </div>
+                    <p className="text-sm text-slate-600">{item.note}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button asChild variant="secondary" className="w-full">
+                      <Link href="/items">View</Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link href="/report">Claim</Link>
+                    </Button>
+                  </div>
                 </div>
               ))}
-            </div>
-            <div className="grid gap-4 rounded-2xl bg-gradient-to-br from-primary/90 to-slate-900 p-5 text-white shadow-lg">
-              <div className="flex items-center gap-3">
-                <Upload className="h-10 w-10 text-accent" />
-                <div>
-                  <p className="text-sm font-medium text-white/80">
-                    Multi-step item intake
-                  </p>
-                  <p className="text-lg font-semibold">
-                    Photos, location, and notes in one flow.
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl bg-white/10 p-4">
-                  <p className="text-sm text-white/70">Recent</p>
-                  <p className="text-base font-semibold">
-                    Laptop • Science Library
-                  </p>
-                </div>
-                <div className="rounded-xl bg-white/10 p-4">
-                  <p className="text-sm text-white/70">In verification</p>
-                  <p className="text-base font-semibold">
-                    ID card • Admin Center
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-16 grid gap-8 lg:grid-cols-3">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="flex h-full flex-col gap-4 rounded-2xl bg-white/90 p-6 shadow-sm ring-1 ring-slate-200"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <feature.icon className="h-6 w-6" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {feature.title}
-                </h3>
-                <p className="text-sm leading-6 text-slate-600">
-                  {feature.description}
-                </p>
-              </div>
+        <section className="rounded-3xl bg-white/90 p-6 shadow-sm ring-1 ring-slate-200 backdrop-blur">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+                Campus guidance
+              </p>
+              <h2 className="text-xl font-semibold text-slate-900">
+                How to get your item back faster
+              </h2>
+              <p className="text-sm text-slate-600">
+                Use clear descriptions, add where you last saw it, and bring a
+                photo ID when claiming.
+              </p>
             </div>
-          ))}
+            <div className="flex gap-2">
+              <Button asChild variant="secondary">
+                <Link href="/items">Browse items</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/report">Report an item</Link>
+              </Button>
+            </div>
+          </div>
         </section>
       </main>
     </div>
