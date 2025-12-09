@@ -24,6 +24,18 @@ Migration SQL lives in `supabase/migrations/0001_init.sql`:
 - Claims with RLS for owners/claimants
 - Public bucket `item-images` with authenticated uploads
 
+Clients:
+- `src/lib/supabase/browser.ts` – browser client (anon key)
+- `src/lib/supabase/server.ts` – server client wired to Next cookies
+- `src/lib/types/supabase.ts` – typed tables/enums for Supabase SDK
+
+Env (.env.local):
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=... # server-only if needed
+```
+
 ## Scripts
 - `npm run dev` – start dev server
 - `npm run lint` – lint with ESLint
