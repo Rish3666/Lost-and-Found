@@ -24,14 +24,14 @@ export type ItemCategory =
 export interface Item {
   id: string;
   title: string;
-  description: string | null;
+  description?: string | null;
   type: ItemType;
   category: ItemCategory;
   status: ItemStatus;
-  location: string | null;
+  location?: string | null;
   user_id: string;
   image_url: string | null;
-  date_incident: string | null; // when lost/found
+  date_incident?: string | null; // when lost/found
   created_at: string;
   updated_at: string;
 }
