@@ -9,13 +9,11 @@
   --card: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b1224;
-    --foreground: #e2e8f0;
-    --card: #0f172a;
-    --muted: #1e293b;
-  }
+[data-theme="dark"] {
+  --background: #0b1224;
+  --foreground: #e2e8f0;
+  --card: #0f172a;
+  --muted: #1e293b;
 }
 
 @theme inline {
@@ -37,6 +35,12 @@ body {
     var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+.dark body {
+  background: radial-gradient(circle at 15% 15%, #0f172a 0, transparent 32%),
+    radial-gradient(circle at 85% 10%, #1f2937 0, transparent 28%),
+    var(--background);
 }
 
 a {
