@@ -14,6 +14,9 @@
     --primary-foreground: #e2e8f0;
     --border: #e2e8f0;
     --ring: #0b2f6d;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+    --input: #e2e8f0;
 
     /* Tailwind theme variable bridge (replaces removed @theme inline) */
     --color-background: var(--background);
@@ -26,11 +29,14 @@
     --color-accent-foreground: var(--accent-foreground);
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
     --color-border: var(--border);
+    --color-input: var(--input);
     --color-ring: var(--ring);
   }
 
-  [data-theme="dark"] {
+  .dark {
     --background: #020817;
     --foreground: #f8fafc;
     --card: #0b1224;
@@ -41,7 +47,10 @@
     --accent-foreground: #020817;
     --primary: #7cc4ff;
     --primary-foreground: #0b1224;
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
     --border: #1f2937;
+    --input: #1f2937;
     --ring: #7cc4ff;
 
     /* Tailwind theme variable bridge (replaces removed @theme inline) */
@@ -55,22 +64,25 @@
     --color-accent-foreground: var(--accent-foreground);
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
     --color-border: var(--border);
+    --color-input: var(--input);
     --color-ring: var(--ring);
   }
 }
 
 body {
-  background: radial-gradient(circle at 20% 20%, #dbeafe44 0, transparent 30%),
-    radial-gradient(circle at 80% 0%, #fef3c744 0, transparent 26%),
+  background: radial-gradient(circle at 20% 20%, #dbeafe22 0, transparent 30%),
+    radial-gradient(circle at 80% 0%, #fef3c722 0, transparent 26%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
 
 .dark body {
-  background: radial-gradient(circle at 15% 15%, #0f172a66 0, transparent 32%),
-    radial-gradient(circle at 85% 10%, #0b2f6d55 0, transparent 28%),
+  background: radial-gradient(circle at 15% 15%, #0f172a33 0, transparent 32%),
+    radial-gradient(circle at 85% 10%, #0b2f6d22 0, transparent 28%),
     var(--background);
 }
 
