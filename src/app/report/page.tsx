@@ -77,8 +77,8 @@ export default function ReportPage() {
                     {message && (
                         <div
                             className={`rounded-md p-3 text-sm ${message.type === "success"
-                                    ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                                    : "bg-destructive/10 text-destructive"
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                                : "bg-destructive/10 text-destructive"
                                 }`}
                         >
                             {message.text}
@@ -87,23 +87,7 @@ export default function ReportPage() {
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium">What is it?</label>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="relative">
-                                <input
-                                    type="radio"
-                                    name="type"
-                                    value="LOST"
-                                    id="type-lost"
-                                    className="peer sr-only"
-                                    required
-                                />
-                                <label
-                                    htmlFor="type-lost"
-                                    className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-muted bg-transparent p-4 hover:bg-muted/50 peer-checked:border-primary peer-checked:text-primary"
-                                >
-                                    <span className="text-lg font-semibold">I Lost Something</span>
-                                </label>
-                            </div>
+                        <div className="grid grid-cols-1 gap-4">
                             <div className="relative">
                                 <input
                                     type="radio"
@@ -111,6 +95,7 @@ export default function ReportPage() {
                                     value="FOUND"
                                     id="type-found"
                                     className="peer sr-only"
+                                    defaultChecked
                                     required
                                 />
                                 <label
@@ -125,7 +110,7 @@ export default function ReportPage() {
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <label htmlFor="title" className="text-sm font-medium">Title</label>
+                            <label htmlFor="title" className="text-sm font-medium">Item name</label>
                             <div className="relative">
                                 <Type className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input name="title" id="title" placeholder="Blue North Face Backpack" className="pl-9" required />
@@ -194,7 +179,7 @@ export default function ReportPage() {
                                     <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageUpload} disabled={uploading} />
                                 </div>
                                 {uploading && <p className="text-sm text-muted-foreground animate-pulse">Uploading...</p>}
-                                {imageUrl && <Button type="button" variant="ghost" size="sm" onClick={() => setImageUrl(null)}>Remove</Button>}
+                                {imageUrl && <Button type="button" variant="ghost" onClick={() => setImageUrl(null)}>Remove</Button>}
                             </div>
                         </div>
                     </div>

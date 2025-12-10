@@ -3,7 +3,13 @@ import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
-export const Navbar = () => {
+import { supabaseServer } from "@/lib/supabase/server";
+import { UserNav } from "@/components/layout/user-nav";
+
+export const Navbar = async () => {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6 sm:px-10">
@@ -18,9 +24,13 @@ export const Navbar = () => {
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button asChild variant="secondary">
-            <Link href="/login">Login</Link>
-          </Button>
+          {user ? (
+            <UserNav user={user} />
+          ) : (
+            <Button asChild variant="secondary">
+              <Link href="/login">Login</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

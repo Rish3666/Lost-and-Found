@@ -43,7 +43,7 @@ export default async function ItemsPage({
     const { data: items, error } = await dbQuery;
 
     if (error) {
-        console.error("Error fetching items:", error);
+        console.error("Error fetching items:", JSON.stringify(error, null, 2));
     }
 
     return (
