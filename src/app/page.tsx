@@ -2,15 +2,18 @@ import Link from "next/link";
 import { AlertCircle, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabaseServer } from "@/lib/supabase/server";
 
-const recentItems = [
-  { title: "Blue Backpack", location: "Engineering Quad", note: "Contains laptop stickers" },
-  { title: "Student ID Card", location: "Main Library", note: "Name: Alex V." },
-  { title: "AirPods Case", location: "Cafeteria", note: "No earbuds inside" },
-  { title: "Black Hoodie", location: "Gym lockers", note: "Small logo on sleeve" },
-];
+export default async function Home() {
+  const supabase = await supabaseServer();
+  const { data: recentItems } = await supabase
+    .from("items")
+    .select("title, location, description, image_url")
+    .eq("type", "FOUND")
+    .eq("status", "OPEN")
+    .order("created_at", { ascending: false })
+    .limit(4);
 
-export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,_#e2e8f011_0,_transparent_35%),radial-gradient(circle_at_20%_60%,_#0b2f6d08_0,_transparent_25%),radial-gradient(circle_at_80%_30%,_#f5c2420a_0,_transparent_28%)] dark:bg-[radial-gradient(circle_at_top_left,_#0f172a33_0,_transparent_35%),radial-gradient(circle_at_20%_60%,_#1f293733_0,_transparent_25%),radial-gradient(circle_at_80%_30%,_#0b2f6d33_0,_transparent_30%)]" />
@@ -71,32 +74,40 @@ export default function Home() {
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {recentItems.map((item) => (
-                <div
-                  key={item.title + item.location}
-                  className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/60 p-4 shadow-sm"
-                >
-                  <div className="aspect-[3/2] w-full rounded-xl bg-gradient-to-br from-muted to-card" />
-                  <div className="space-y-1">
-                    <h3 className="text-base font-semibold">
-                      {item.title}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      {item.location}
+              {recentItems && recentItems.length > 0 ? (
+                recentItems.map((item: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/60 p-4 shadow-sm"
+                  >
+                    <div className="aspect-[3/2] w-full overflow-hidden rounded-xl bg-gradient-to-br from-muted to-card">
+                      {item.image_url && <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />}
                     </div>
-                    <p className="text-sm text-muted-foreground">{item.note}</p>
+                    <div className="space-y-1">
+                      <h3 className="text-base font-semibold lines-clamp-1">
+                        {item.title}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <span className="truncate">{item.location}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-1">{item.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button asChild variant="secondary" className="w-full">
+                        <Link href="/items">View</Link>
+                      </Button>
+                      <Button asChild className="w-full">
+                        <Link href="/report">Claim</Link>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button asChild variant="secondary" className="w-full">
-                      <Link href="/items">View</Link>
-                    </Button>
-                    <Button asChild className="w-full">
-                      <Link href="/report">Claim</Link>
-                    </Button>
-                  </div>
+                ))
+              ) : (
+                <div className="col-span-2 py-8 text-center text-muted-foreground">
+                  No recent items found.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </section>

@@ -1,6 +1,6 @@
 -- Create Profiles table (users are automatically created by Supabase Auth)
 CREATE TABLE public.profiles (
-  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  id UUID REFERENCES auth.users(id) NOT NULL PRIMARY KEY,
   full_name TEXT,
   avatar_url TEXT,
   role TEXT DEFAULT 'student',
@@ -34,7 +34,7 @@ CREATE TABLE public.items (
   date_incident TIMESTAMPTZ,
   status TEXT DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLAIMED', 'RESOLVED')),
   image_url TEXT,
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) NOT NULL, -- Referenced public.profiles for easier joins
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -43,7 +43,7 @@ CREATE TABLE public.items (
 CREATE TABLE public.claims (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   item_id UUID REFERENCES public.items(id) NOT NULL,
-  claimant_id UUID REFERENCES auth.users(id) NOT NULL,
+  claimant_id UUID REFERENCES public.profiles(id) NOT NULL, -- Referenced public.profiles for consistency
   status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
   proof_description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
