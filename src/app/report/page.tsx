@@ -53,7 +53,11 @@ export default function ReportPage() {
 
         if (uploadError) {
             console.error(uploadError);
-            alert('Error uploading image');
+            if (uploadError.message.includes("Bucket not found")) {
+                alert("Error: The 'items' storage bucket does not exist. Please run 'supabase/storage.sql' in your Supabase SQL Editor.");
+            } else {
+                alert(`Error uploading image: ${uploadError.message}`);
+            }
             setUploading(false);
             return;
         }
