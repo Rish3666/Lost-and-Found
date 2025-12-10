@@ -14,6 +14,20 @@
     --primary-foreground: #e2e8f0;
     --border: #e2e8f0;
     --ring: #0b2f6d;
+
+    /* Tailwind theme variable bridge (replaces removed @theme inline) */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-border: var(--border);
+    --color-ring: var(--ring);
   }
 
   [data-theme="dark"] {
@@ -29,6 +43,20 @@
     --primary-foreground: #0b1224;
     --border: #1f2937;
     --ring: #7cc4ff;
+
+    /* Tailwind theme variable bridge (replaces removed @theme inline) */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-border: var(--border);
+    --color-ring: var(--ring);
   }
 }
 
