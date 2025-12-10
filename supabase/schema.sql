@@ -23,6 +23,12 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
+-- Backfill profiles for existing users
+INSERT INTO public.profiles (id, full_name, avatar_url)
+SELECT id, raw_user_meta_data->>'full_name', raw_user_meta_data->>'avatar_url'
+FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+
 -- Create Items table
 CREATE TABLE public.items (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
