@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/browser";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,16 +33,14 @@ const formSchema = z.object({
     category: z.enum(["ELECTRONICS", "CLOTHING", "ID_CARDS", "KEYS", "OTHER"]),
     location_found: z.string().min(2, "Location is required"),
     date_found: z.string().optional(),
-    handover_method: z.enum(["will_drop_off", "contact_me"], {
-        required_error: "Please select a handover method",
-    }),
+    handover_method: z.enum(["will_drop_off", "contact_me"]),
     image_url: z.string().optional(),
 });
 
 export default function ReportFoundPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const supabase = createClient();
+    const supabase = supabaseBrowser();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),

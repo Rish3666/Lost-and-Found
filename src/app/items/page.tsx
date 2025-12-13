@@ -1,127 +1,142 @@
-import { supabaseServer } from "@/lib/supabase/server";
-import { ItemCard } from "@/components/ui/item-card";
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { MapPin, Search } from "lucide-react";
 
-export const metadata = {
-    title: "Browse Items - Campus Lost & Found",
-    description: "Search and filter lost and found items.",
-};
+export default function ItemsPage() {
+    const supabase = supabaseBrowser();
+    const [search, setSearch] = useState("");
+    const [category, setCategory] = useState<string>("ALL");
+    const [itemType, setItemType] = useState<string>("ALL");
 
-export default async function ItemsPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-    const supabase = await supabaseServer();
-    const params = await searchParams; // Next.js 15+ searchParams is a promise
+    const { data: items, isLoading } = useQuery({
+        queryKey: ["items", search, category, itemType],
+        queryFn: async () => {
+            let query = supabase.from("items").select("*").eq("status", "OPEN").order("created_at", { ascending: false });
 
-    const query = (params.q as string) || "";
-    const type = (params.type as string) || "all";
-    const category = (params.category as string) || "all";
+            if (search) {
+                query = query.ilike("title", `%${search}%`);
+            }
 
-    let dbQuery = supabase
-        .from("items")
-        .select("*")
-        .order("created_at", { ascending: false });
+            if (category !== "ALL") {
+                query = query.eq("category", category);
+            }
 
-    if (query) {
-        dbQuery = dbQuery.ilike("title", `%${query}%`);
-    }
+            if (itemType !== "ALL") {
+                query = query.eq("type", itemType);
+            }
 
-    if (type !== "all") {
-        dbQuery = dbQuery.eq("type", type.toUpperCase());
-    }
-
-    if (category !== "all") {
-        dbQuery = dbQuery.eq("category", category);
-    }
-
-    const { data: items, error } = await dbQuery;
-
-    if (error) {
-        console.error("Error fetching items:", JSON.stringify(error, null, 2));
-    }
+            const { data, error } = await query;
+            if (error) throw error;
+            return data;
+        },
+    });
 
     return (
-        <div className="container mx-auto max-w-7xl px-4 py-8">
-            <div className="mb-8 flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
+        <div className="container mx-auto max-w-6xl px-4 py-8">
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
                     <h1 className="text-3xl font-bold">Browse Items</h1>
-                    <p className="text-muted-foreground">Search through reported lost and found items.</p>
+                    <p className="text-muted-foreground">Find lost items or see what's been found.</p>
                 </div>
-
-                {/* Search and Filter Form */}
-                <form className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-end">
-                    <div className="flex-1 space-y-2">
-                        <label htmlFor="q" className="text-sm font-medium">Search</label>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input name="q" placeholder="Search items..." defaultValue={query} className="pl-9" />
-                        </div>
-                    </div>
-                    <div className="w-full sm:w-[150px] space-y-2">
-                        <label htmlFor="type" className="text-sm font-medium">Type</label>
-                        <select
-                            name="type"
-                            defaultValue={type}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <option value="all">All Types</option>
-                            <option value="lost">Lost</option>
-                            <option value="found">Found</option>
-                        </select>
-                    </div>
-                    <div className="w-full sm:w-[150px] space-y-2">
-                        <label htmlFor="category" className="text-sm font-medium">Category</label>
-                        <select
-                            name="category"
-                            defaultValue={category}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <option value="all">All Categories</option>
-                            <option value="ELECTRONICS">Electronics</option>
-                            <option value="CLOTHING">Clothing</option>
-                            <option value="ID_CARDS">ID Cards</option>
-                            <option value="KEYS">Keys</option>
-                            <option value="OTHER">Other</option>
-                        </select>
-                    </div>
-                    <Button type="submit">Filter</Button>
-                    {/* Simple clear filter hack: Link to base URL */}
-                    {(query || type !== "all" || category !== "all") && (
-                        <Button variant="ghost" asChild>
-                            <Link href="/items">Clear</Link>
-                        </Button>
-                    )}
-                </form>
-            </div>
-
-            {!items || items.length === 0 ? (
-                <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed border-muted-foreground/25 bg-muted/50 p-8 text-center">
-                    <p className="text-lg font-medium">No items found</p>
-                    <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
-                    <Button asChild variant="link" className="mt-2">
-                        <Link href="/report">Report an Item</Link>
+                <div className="flex gap-2">
+                    <Button asChild>
+                        <Link href="/report/lost">I Lost Something</Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                        <Link href="/report/found">I Found Something</Link>
                     </Button>
                 </div>
+            </div>
+
+            <div className="mb-8 grid gap-4 md:grid-cols-[1fr_200px_200px]">
+                <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search items..."
+                        className="pl-9"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+                <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All Categories</SelectItem>
+                        <SelectItem value="ELECTRONICS">Electronics</SelectItem>
+                        <SelectItem value="CLOTHING">Clothing</SelectItem>
+                        <SelectItem value="ID_CARDS">ID Cards</SelectItem>
+                        <SelectItem value="KEYS">Keys</SelectItem>
+                        <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={itemType} onValueChange={setItemType}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All Types</SelectItem>
+                        <SelectItem value="LOST">Lost</SelectItem>
+                        <SelectItem value="FOUND">Found</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {isLoading ? (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-64 animate-pulse rounded-xl bg-muted" />
+                    ))}
+                </div>
+            ) : items?.length === 0 ? (
+                <div className="text-center py-12">
+                    <p className="text-muted-foreground">No items found matching your filters.</p>
+                </div>
             ) : (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {items.map((item) => (
-                        <ItemCard
-                            key={item.id}
-                            id={item.id}
-                            title={item.title}
-                            location={item.location}
-                            description={item.description}
-                            imageUrl={item.image_url}
-                            date={item.date_incident}
-                            type={item.type == "LOST" || item.type == "FOUND" ? item.type : "LOST"} // Fallback
-                            category={item.category}
-                        />
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {items?.map((item) => (
+                        <Link key={item.id} href={`/items/${item.id}`}>
+                            <div className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md">
+                                <div className="aspect-video w-full overflow-hidden bg-muted">
+                                    {item.image_url ? (
+                                        <img src={item.image_url} alt={item.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground">
+                                            No Image
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${item.type === 'LOST' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                                            {item.type}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {new Date(item.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <h3 className="mt-2 text-lg font-semibold group-hover:text-primary line-clamp-1">{item.title}</h3>
+                                    <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                                        <MapPin className="h-4 w-4 shrink-0" />
+                                        <span className="truncate">{item.location || item.last_seen_location || "Unknown location"}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
                     ))}
                 </div>
             )}

@@ -1,161 +1,185 @@
-import { supabaseServer } from "@/lib/supabase/server";
+"use client";
+
+import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Calendar, Tag, Info, User } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ClaimButton } from "./claim-button";
+import { useState } from "react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
-export default async function ItemPage({
-    params,
-}: {
-    params: Promise<{ id: string }>;
-}) {
-    const { id } = await params;
-    const supabase = await supabaseServer();
+export default function ItemDetailPage() {
+    const { id } = useParams();
+    const supabase = supabaseBrowser();
+    const router = useRouter();
+    const [claimLoading, setClaimLoading] = useState(false);
+    const [proof, setProof] = useState("");
+    const [claimOpen, setClaimOpen] = useState(false);
 
-    const { data: item, error } = await supabase
-        .from("items")
-        .select(`
-        *,
-        profiles:user_id (
-            full_name,
-            role
-        )
-    `)
-        .eq("id", id)
-        .single();
+    const { data: item, isLoading } = useQuery({
+        queryKey: ["item", id],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("items")
+                .select("*, profiles:user_id(full_name)")
+                .eq("id", id)
+                .single();
+            if (error) throw error;
+            return data;
+        },
+    });
 
-    if (error || !item) {
-        notFound();
-    }
+    const { data: user } = useQuery({
+        queryKey: ["user"],
+        queryFn: async () => {
+            const { data } = await supabase.auth.getUser();
+            return data.user;
+        },
+    });
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const handleClaim = async () => {
+        if (!user) {
+            router.push("/login");
+            return;
+        }
+        try {
+            setClaimLoading(true);
+            const { error } = await supabase.from("claims").insert({
+                item_id: id,
+                claimant_id: user.id,
+                status: "PENDING",
+                proof_description: proof,
+            });
 
-    // Helper to format date
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return "Unknown Date";
-        return new Date(dateString).toLocaleDateString(undefined, {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+            if (error) throw error;
+
+            setClaimOpen(false);
+            alert("Claim submitted successfully!");
+            // Usually we would invalidate queries or redirect
+        } catch (error) {
+            console.error("Error submitting claim:", error);
+            alert("Failed to submit claim.");
+        } finally {
+            setClaimLoading(false);
+        }
     };
 
-    return (
-        <div className="container mx-auto max-w-5xl px-4 py-8">
-            <Button variant="ghost" asChild className="mb-6 pl-0 hover:pl-0 hover:bg-transparent">
-                <Link href="/items" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Browse
-                </Link>
-            </Button>
+    if (isLoading) {
+        return <div className="p-8 text-center">Loading item details...</div>;
+    }
 
-            <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-                {/* Left Column: Image */}
-                <div className="space-y-4">
-                    <div className="overflow-hidden rounded-2xl border border-border bg-muted shadow-sm">
-                        {item.image_url ? (
-                            <img
-                                src={item.image_url}
-                                alt={item.title}
-                                className="h-full w-full object-cover aspect-[4/3]"
-                            />
-                        ) : (
-                            <div className="flex aspect-[4/3] w-full items-center justify-center bg-muted text-muted-foreground">
-                                <div className="flex flex-col items-center gap-2">
-                                    <Info className="h-10 w-10 opacity-50" />
-                                    <span>No existing image</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+    if (!item) {
+        return <div className="p-8 text-center">Item not found.</div>;
+    }
+
+    const isOwner = user?.id === item.user_id;
+
+    return (
+        <div className="container mx-auto max-w-4xl px-4 py-8">
+            <Link
+                href="/items"
+                className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Items
+            </Link>
+
+            <div className="grid gap-8 md:grid-cols-2">
+                <div className="overflow-hidden rounded-2xl border border-border bg-muted">
+                    {item.image_url ? (
+                        <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
+                    ) : (
+                        <div className="flex h-96 w-full items-center justify-center text-muted-foreground">
+                            No Image Available
+                        </div>
+                    )}
                 </div>
 
-                {/* Right Column: Details */}
-                <div className="flex flex-col gap-6">
+                <div className="space-y-6">
                     <div>
-                        <div className="flex items-center gap-3">
-                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide
-                        ${item.type === 'LOST'
-                                    ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-                                    : 'bg-green-500/10 text-green-600 dark:text-green-400'
-                                }
-                    `}>
-                                {item.type}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                                Reported on {formatDate(item.created_at)}
-                            </span>
+                        <div className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${item.type === 'LOST' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                            {item.type}
                         </div>
-                        <h1 className="mt-4 text-4xl font-bold leading-tight">{item.title}</h1>
+                        <h1 className="mt-4 text-3xl font-bold">{item.title}</h1>
+                        <div className="mt-2 text-lg text-muted-foreground">
+                            Category: {item.category}
+                        </div>
                     </div>
 
-                    <div className="grid gap-4 rounded-xl bg-card/50 p-6 ring-1 ring-border">
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                                <MapPin className="h-5 w-5" />
-                            </div>
+                    <div className="space-y-4 rounded-xl bg-card p-6 shadow-sm ring-1 ring-border">
+                        <div className="flex items-start gap-3">
+                            <MapPin className="mt-1 h-5 w-5 text-primary" />
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Location</p>
-                                <p className="font-semibold">{item.location || "N/A"}</p>
+                                <p className="font-semibold">Location</p>
+                                <p className="text-muted-foreground">{item.location || item.last_seen_location}</p>
                             </div>
                         </div>
-
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                                <Calendar className="h-5 w-5" />
-                            </div>
+                        <div className="flex items-start gap-3">
+                            <Calendar className="mt-1 h-5 w-5 text-primary" />
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Date of Incident</p>
-                                <p className="font-semibold">{formatDate(item.date_incident)}</p>
+                                <p className="font-semibold">Date</p>
+                                <p className="text-muted-foreground">
+                                    {new Date(item.date_incident || item.created_at).toLocaleDateString()}
+                                </p>
                             </div>
                         </div>
-
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                                <Tag className="h-5 w-5" />
-                            </div>
+                        <div className="flex items-start gap-3">
+                            <User className="mt-1 h-5 w-5 text-primary" />
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Category</p>
-                                <p className="font-semibold capitalize">{item.category}</p>
+                                <p className="font-semibold">Reported By</p>
+                                <p className="text-muted-foreground">
+                                    {item.profiles?.full_name || "Anonymous User"}
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">Description</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                            {item.description || "No description provided."}
-                        </p>
+                    <div>
+                        <h3 className="mb-2 text-xl font-semibold">Description</h3>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{item.description}</p>
                     </div>
 
-                    {/* User Info (Reporter) */}
-                    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 p-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                            <User className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium">Reported by</p>
-                            <p className="text-sm text-muted-foreground">
-                                {/* 
-                          Note: In a real app we might obscure this name or only show first name 
-                          unless it's a found item and we want to facilitate contact.
-                        */}
-                                {(item.profiles as any)?.full_name || "Anonymous User"}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="mt-auto pt-6">
-                        {item.type === 'FOUND' && item.status === 'OPEN' ? (
-                            <ClaimButton itemId={item.id} isLoggedIn={!!user} />
-                        ) : (
-                            <Button disabled variant="secondary" size="lg" className="w-full sm:w-auto">
-                                {item.status === 'CLAIMED' ? 'Item Claimed' : 'Cannot be claimed'}
-                            </Button>
-                        )}
-                    </div>
+                    {!isOwner && item.status === "OPEN" && (
+                        <Dialog open={claimOpen} onOpenChange={setClaimOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="lg" className="w-full text-lg">
+                                    {item.type === "FOUND" ? "Claim This Item" : "I Found This Item"}
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Submit Claim</DialogTitle>
+                                    <DialogDescription>
+                                        Provide details to verify that you {item.type === "FOUND" ? "own this item" : "found this item"}.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <Textarea
+                                        placeholder="Describe unique features or where you lost/found it..."
+                                        value={proof}
+                                        onChange={(e) => setProof(e.target.value)}
+                                    />
+                                    <Button onClick={handleClaim} disabled={claimLoading} className="w-full">
+                                        {claimLoading ? "Submitting..." : "Submit Claim"}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
+                    {isOwner && (
+                        <Button variant="outline" className="w-full">
+                            Manage This Item
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Upload, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/browser";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -18,7 +18,7 @@ export function ImageUpload({
     bucketName = "items",
 }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false);
-    const supabase = createClient();
+    const supabase = supabaseBrowser();
 
     const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {

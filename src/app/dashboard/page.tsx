@@ -1,212 +1,189 @@
-import { supabaseServer } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { supabaseBrowser } from "@/lib/supabase/browser";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ItemCard } from "@/components/ui/item-card";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDistanceToNow } from "date-fns";
-import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 
-export default async function DashboardPage() {
-    const supabase = await supabaseServer();
+export default function DashboardPage() {
+    const supabase = supabaseBrowser();
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { data: user, isLoading: userLoading } = useQuery({
+        queryKey: ["user"],
+        queryFn: async () => {
+            const { data } = await supabase.auth.getUser();
+            return data.user;
+        },
+    });
 
-    if (!user) {
-        redirect("/login");
+    const { data: myItems, isLoading: itemsLoading } = useQuery({
+        queryKey: ["my-items", user?.id],
+        enabled: !!user,
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("items")
+                .select("*")
+                .eq("user_id", user!.id)
+                .order("created_at", { ascending: false });
+            if (error) throw error;
+            return data;
+        },
+    });
+
+    const { data: myClaims, isLoading: claimsLoading } = useQuery({
+        queryKey: ["my-claims", user?.id],
+        enabled: !!user,
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("claims")
+                .select("*, items(*)")
+                .eq("claimant_id", user!.id)
+                .order("created_at", { ascending: false });
+            if (error) throw error;
+            return data;
+        },
+    });
+
+    if (userLoading) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
-    // Fetch items reported by the user
-    // We also want to know if there are any claims on these items
-    const { data: myReports } = await supabase
-        .from("items")
-        .select(`
-            *,
-            claims (
-                id,
-                status,
-                claimant_id,
-                created_at,
-                profiles:claimant_id (full_name)
-            )
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+    if (!user) {
+        return (
+            <div className="container mx-auto px-4 py-8 text-center">
+                <h1 className="mb-4 text-2xl font-bold">Please Log In</h1>
+                <Button asChild>
+                    <Link href="/login">Go to Login</Link>
+                </Button>
+            </div>
+        );
+    }
 
-    // Fetch items claimed by the user
-    const { data: myClaims } = await supabase
-        .from("claims")
-        .select(`
-            *,
-            items (
-                title,
-                image_url,
-                category
-            )
-        `)
-        .eq("claimant_id", user.id)
-        .order("created_at", { ascending: false });
+    const lostItems = myItems?.filter((item) => item.type === "LOST") || [];
+    const foundItems = myItems?.filter((item) => item.type === "FOUND") || [];
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-5xl">
-            <h1 className="text-3xl font-bold mb-2">My Activity</h1>
-            <p className="text-muted-foreground mb-8">Manage your reports and track your claims.</p>
+        <div className="container mx-auto max-w-6xl px-4 py-8">
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold">My Dashboard</h1>
+                    <p className="text-muted-foreground">Manage your reports and claims.</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button asChild size="sm">
+                        <Link href="/report/lost">Report Lost</Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                        <Link href="/report/found">Report Found</Link>
+                    </Button>
+                </div>
+            </div>
 
-            <Tabs defaultValue="reports" className="w-full">
-                <TabsList className="mb-6">
-                    <TabsTrigger value="reports">My Reports ({myReports?.length || 0})</TabsTrigger>
+            <Tabs defaultValue="lost" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+                    <TabsTrigger value="lost">Lost Reports ({lostItems.length})</TabsTrigger>
+                    <TabsTrigger value="found">Found Reports ({foundItems.length})</TabsTrigger>
                     <TabsTrigger value="claims">My Claims ({myClaims?.length || 0})</TabsTrigger>
                 </TabsList>
 
-                {/* MY REPORTS TAB */}
-                <TabsContent value="reports" className="space-y-6">
-                    {myReports && myReports.length > 0 ? (
-                        <div className="grid gap-6">
-                            {myReports.map((item) => {
-                                const pendingClaims = item.claims.filter((c: any) => c.status === 'PENDING');
-                                const hasPending = pendingClaims.length > 0;
-
-                                return (
-                                    <div key={item.id} className="relative">
-                                        {hasPending && (
-                                            <span className="absolute -top-2 -right-2 flex h-4 w-4">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
-                                            </span>
-                                        )}
-                                        <Card className={hasPending ? "border-red-500/50" : ""}>
-                                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                                <div className="space-y-1">
-                                                    <CardTitle className="text-base font-medium">
-                                                        {item.title}
-                                                    </CardTitle>
-                                                    <CardDescription>
-                                                        Posted {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                                                    </CardDescription>
-                                                </div>
-                                                <Badge variant={
-                                                    item.status === 'OPEN' ? 'default' :
-                                                        item.status === 'RESOLVED' ? 'secondary' : 'outline'
-                                                }>
-                                                    {item.status}
-                                                </Badge>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="grid gap-4 mt-2">
-                                                    <div className="flex items-center text-sm text-muted-foreground gap-4">
-                                                        <span>{item.category}</span>
-                                                        <span>•</span>
-                                                        <span>{item.location}</span>
-                                                    </div>
-
-                                                    {/* CLAIMS SECTION */}
-                                                    <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-                                                        <h4 className="text-sm font-semibold flex items-center gap-2">
-                                                            <AlertCircle className="h-4 w-4" />
-                                                            Claims ({item.claims.length})
-                                                        </h4>
-
-                                                        {item.claims.length === 0 ? (
-                                                            <p className="text-sm text-muted-foreground">No claims yet.</p>
-                                                        ) : (
-                                                            <div className="space-y-3">
-                                                                {item.claims.map((claim: any) => (
-                                                                    <div key={claim.id} className="flex items-center justify-between bg-background p-3 rounded-md border text-sm">
-                                                                        <div className="flex flex-col">
-                                                                            <span className="font-medium">{claim.profiles?.full_name || 'Unknown User'}</span>
-                                                                            <span className="text-xs text-muted-foreground">
-                                                                                {formatDistanceToNow(new Date(claim.created_at), { addSuffix: true })}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            {claim.status === 'PENDING' && (
-                                                                                <Badge variant="outline" className="border-yellow-500 text-yellow-500">Pending Review</Badge>
-                                                                            )}
-                                                                            {claim.status === 'APPROVED' && (
-                                                                                <Badge variant="outline" className="border-green-500 text-green-500">Approved</Badge>
-                                                                            )}
-                                                                            {claim.status === 'REJECTED' && (
-                                                                                <Badge variant="outline" className="border-red-500 text-red-500">Rejected</Badge>
-                                                                            )}
-
-                                                                            {/* Action Buttons for Pending Claims */}
-                                                                            {/* TODO: Add Approve/Reject actions here later if requested */}
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                );
-                            })}
+                <TabsContent value="lost" className="mt-6">
+                    {itemsLoading ? (
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2].map(i => <div key={i} className="h-64 animate-pulse rounded-xl bg-muted" />)}
+                        </div>
+                    ) : lostItems.length === 0 ? (
+                        <div className="py-12 text-center text-muted-foreground">
+                            You haven't reported any lost items.
                         </div>
                     ) : (
-                        <div className="text-center py-12">
-                            <p className="text-muted-foreground">You haven't reported any items yet.</p>
-                            <Button asChild className="mt-4">
-                                <Link href="/report">Report an Item</Link>
-                            </Button>
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {lostItems.map((item) => (
+                                <ItemCard
+                                    key={item.id}
+                                    id={item.id}
+                                    title={item.title}
+                                    location={item.location || item.last_seen_location}
+                                    description={item.description}
+                                    imageUrl={item.image_url}
+                                    date={item.date_incident || item.created_at}
+                                    type={item.type}
+                                    category={item.category}
+                                />
+                            ))}
                         </div>
                     )}
                 </TabsContent>
 
-                {/* MY CLAIMS TAB */}
-                <TabsContent value="claims" className="space-y-6">
-                    {myClaims && myClaims.length > 0 ? (
-                        <div className="grid gap-4">
-                            {myClaims.map((claim) => (
-                                <Card key={claim.id}>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <div className="space-y-1">
-                                            <CardTitle className="text-base font-medium">
-                                                Claim for: {claim.items.title}
-                                            </CardTitle>
-                                            <CardDescription>
-                                                Submitted {formatDistanceToNow(new Date(claim.created_at), { addSuffix: true })}
-                                            </CardDescription>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {claim.status === 'PENDING' && <Clock className="h-5 w-5 text-yellow-500" />}
-                                            {claim.status === 'APPROVED' && <CheckCircle className="h-5 w-5 text-green-500" />}
-                                            {claim.status === 'REJECTED' && <XCircle className="h-5 w-5 text-red-500" />}
-                                            <span className={`text-sm font-medium ${claim.status === 'PENDING' ? 'text-yellow-500' :
-                                                    claim.status === 'APPROVED' ? 'text-green-500' : 'text-red-500'
-                                                }`}>
-                                                {claim.status}
-                                            </span>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex items-center gap-4 mt-2">
-                                            {claim.items.image_url && (
-                                                <div className="h-16 w-16 rounded-md overflow-hidden bg-muted">
-                                                    <img src={claim.items.image_url} alt="Item" className="h-full w-full object-cover" />
-                                                </div>
-                                            )}
-                                            <div className="text-sm">
-                                                <p><span className="text-muted-foreground">Category:</span> {claim.items.category}</p>
-                                                {claim.proof_description && (
-                                                    <p className="mt-1"><span className="text-muted-foreground">Your Proof:</span> {claim.proof_description}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                <TabsContent value="found" className="mt-6">
+                    {itemsLoading ? (
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2].map(i => <div key={i} className="h-64 animate-pulse rounded-xl bg-muted" />)}
+                        </div>
+                    ) : foundItems.length === 0 ? (
+                        <div className="py-12 text-center text-muted-foreground">
+                            You haven't reported any found items.
                         </div>
                     ) : (
-                        <div className="text-center py-12">
-                            <p className="text-muted-foreground">You haven't claimed any items yet.</p>
-                            <Button asChild className="mt-4">
-                                <Link href="/items">Browse Items</Link>
-                            </Button>
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {foundItems.map((item) => (
+                                <ItemCard
+                                    key={item.id}
+                                    id={item.id}
+                                    title={item.title}
+                                    location={item.location || item.last_seen_location}
+                                    description={item.description}
+                                    imageUrl={item.image_url}
+                                    date={item.date_incident || item.created_at}
+                                    type={item.type}
+                                    category={item.category}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="claims" className="mt-6">
+                    {claimsLoading ? (
+                        <div className="space-y-4">
+                            {[1, 2].map(i => <div key={i} className="h-24 animate-pulse rounded-xl bg-muted" />)}
+                        </div>
+                    ) : myClaims?.length === 0 ? (
+                        <div className="py-12 text-center text-muted-foreground">
+                            You haven't made any claims yet.
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {myClaims?.map((claim) => (
+                                <div key={claim.id} className="flex flex-col gap-4 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-16 w-16 overflow-hidden rounded-md bg-muted">
+                                            {claim.items?.image_url ? (
+                                                <img src={claim.items.image_url} alt={claim.items.title} className="h-full w-full object-cover" />
+                                            ) : null}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold">{claim.items?.title || "Unknown Item"}</h3>
+                                            <p className="text-sm text-muted-foreground">Claimed on {new Date(claim.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold
+                            ${claim.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                                claim.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                                    'bg-yellow-100 text-yellow-800'}
+                         `}>
+                                            {claim.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </TabsContent>
