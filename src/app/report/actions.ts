@@ -58,7 +58,7 @@ export async function submitItem(prevState: any, formData: FormData) {
 
         if (error) {
             console.error("Supabase error:", error);
-            return { success: false, message: "Failed to submit item. Please try again." };
+            return { success: false, message: `Failed to submit item: ${error.message} (Code: ${error.code})` };
         }
 
         revalidatePath("/items");
@@ -68,7 +68,7 @@ export async function submitItem(prevState: any, formData: FormData) {
         return { success: true, message: "Item reported successfully!" };
     } catch (e) {
         if (e instanceof z.ZodError) {
-            return { success: false, message: "Invalid data: " + e.errors[0].message };
+            return { success: false, message: "Invalid data: " + e.issues[0].message };
         }
         return { success: false, message: "An unexpected error occurred." };
     }

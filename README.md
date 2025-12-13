@@ -17,23 +17,21 @@ npm run dev
 - React Hook Form + Zod
 - Lucide React
 
-## Supabase
-Migration SQL lives in `supabase/migrations/0001_init.sql`:
-- Profiles (extends `auth.users`)
-- Items with status/type/category enums
-- Claims with RLS for owners/claimants
-- Public bucket `item-images` with authenticated uploads
+## Supabase Setup (Important)
+The app requires database tables and storage buckets to function.
+Run the master setup script in your Supabase Dashboard SQL Editor:
 
-Clients:
-- `src/lib/supabase/browser.ts` – browser client (anon key)
-- `src/lib/supabase/server.ts` – server client wired to Next cookies
-- `src/lib/types/supabase.ts` – typed tables/enums for Supabase SDK
+**SQL File:** `supabase/setup.sql`
+
+This script will:
+1. Create Tables (`profiles`, `items`, `claims`)
+2. Create Storage Bucket (`items`)
+3. Set up RLS Policies
 
 Env (.env.local):
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=... # server-only if needed
 ```
 
 ## Scripts

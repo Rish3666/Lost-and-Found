@@ -4,6 +4,11 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('items', 'items', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- Drop existing storage policies to avoid errors if re-running
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated Uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete their own images" ON storage.objects;
+
 -- Policy: Allow public access to view images
 -- This enables everyone to see the images on the site
 CREATE POLICY "Public Access"
