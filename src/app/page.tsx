@@ -8,7 +8,7 @@ export default async function Home() {
   const supabase = await supabaseServer();
   const { data: recentItems } = await supabase
     .from("items")
-    .select("title, location, description, image_url")
+    .select("id, title, location, description, image_url")
     .eq("type", "FOUND")
     .eq("status", "OPEN")
     .order("created_at", { ascending: false })
@@ -95,10 +95,10 @@ export default async function Home() {
                     </div>
                     <div className="flex gap-2">
                       <Button asChild variant="secondary" className="w-full">
-                        <Link href="/items">View</Link>
+                        <Link href={`/items/${item.id}`}>View</Link>
                       </Button>
                       <Button asChild className="w-full">
-                        <Link href="/report">Claim</Link>
+                        <Link href={`/items/${item.id}`}>Claim</Link>
                       </Button>
                     </div>
                   </div>
