@@ -5,6 +5,10 @@ import { cn } from "@/lib/utils";
 const buttonVariants = {
   default:
     "inline-flex items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+  destructive:
+    "inline-flex items-center justify-center rounded-full bg-destructive text-sm font-semibold text-destructive-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-destructive/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+  outline:
+    "inline-flex items-center justify-center rounded-full border border-input bg-background text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
   secondary:
     "inline-flex items-center justify-center rounded-full border border-input bg-secondary text-sm font-semibold text-secondary-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-secondary/80 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
   ghost:

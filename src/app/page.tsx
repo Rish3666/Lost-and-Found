@@ -35,11 +35,11 @@ export default async function Home() {
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild>
-                <Link href="/items">I Lost Something</Link>
+              <Button asChild size="lg" className="h-12 px-8 text-base">
+                <Link href="/report/lost">Report Lost Item</Link>
               </Button>
-              <Button asChild variant="secondary">
-                <Link href="/report">I Found Something</Link>
+              <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base bg-background/50 backdrop-blur hover:bg-background/80">
+                <Link href="/report/found">Report Found Item</Link>
               </Button>
             </div>
             <div className="flex flex-col gap-3 rounded-2xl bg-card/90 p-4 shadow-sm ring-1 ring-border backdrop-blur sm:flex-row sm:items-center sm:gap-4">
@@ -131,7 +131,7 @@ export default async function Home() {
                 <Link href="/items">Browse items</Link>
               </Button>
               <Button asChild>
-                <Link href="/report">Report an item</Link>
+                <Link href="/report/found">Report Found</Link>
               </Button>
             </div>
           </div>

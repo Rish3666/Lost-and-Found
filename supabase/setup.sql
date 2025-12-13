@@ -150,4 +150,36 @@ WITH CHECK ( bucket_id = 'items' );
 CREATE POLICY "Users can delete their own images"
 ON storage.objects FOR DELETE
 TO authenticated
-USING ( bucket_id = 'items' AND auth.uid() = owner );
+
+-- ==========================================
+-- 3. SCHEMA UPDATES (New Columns)
+-- ==========================================
+
+-- Add columns to 'items' table
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'custody_location') THEN
+        ALTER TABLE public.items ADD COLUMN custody_location TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'handover_method') THEN
+        ALTER TABLE public.items ADD COLUMN handover_method TEXT; -- 'will_drop_off', 'contact_me'
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'items' AND column_name = 'last_seen_location') THEN
+        ALTER TABLE public.items ADD COLUMN last_seen_location TEXT;
+    END IF;
+END $$;
+
+-- Add columns to 'claims' table
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'claims' AND column_name = 'admin_notes') THEN
+        ALTER TABLE public.claims ADD COLUMN admin_notes TEXT;
+    END IF;
+    -- Update status check constraint if simple modification isn't supported, we rely on text check.
+    -- Assuming status is TEXT, we just need to ensure the app writes correct values.
+    -- If there was a CHECK constraint, we might need to drop and recreate it.
+    -- For now, we'll assume the CHECK constraint needs to be updated.
+    
+    ALTER TABLE public.claims DROP CONSTRAINT IF EXISTS claims_status_check;
+    ALTER TABLE public.claims ADD CONSTRAINT claims_status_check CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'RETURNED'));
+END $$;

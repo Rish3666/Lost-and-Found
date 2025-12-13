@@ -44,6 +44,9 @@ export interface Database {
           user_id: string;
           created_at: string;
           updated_at: string;
+          custody_location: string | null;
+          handover_method: string | null;
+          last_seen_location: string | null;
         };
         Insert: {
           id?: string;
@@ -58,6 +61,9 @@ export interface Database {
           user_id: string;
           created_at?: string;
           updated_at?: string;
+          custody_location?: string | null;
+          handover_method?: string | null;
+          last_seen_location?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["items"]["Insert"]>;
       };
@@ -66,19 +72,21 @@ export interface Database {
           id: string;
           item_id: string;
           claimant_id: string;
-          status: "PENDING" | "APPROVED" | "REJECTED";
+          status: "PENDING" | "APPROVED" | "REJECTED" | "RETURNED";
           proof_description: string | null;
           created_at: string;
           updated_at: string;
+          admin_notes: string | null;
         };
         Insert: {
           id?: string;
           item_id: string;
           claimant_id: string;
-          status?: "PENDING" | "APPROVED" | "REJECTED";
+          status?: "PENDING" | "APPROVED" | "REJECTED" | "RETURNED";
           proof_description?: string | null;
           created_at?: string;
           updated_at?: string;
+          admin_notes?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["claims"]["Insert"]>;
       };
