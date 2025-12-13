@@ -51,6 +51,7 @@ export default function ReportFoundPage() {
             location_found: "",
             handover_method: "will_drop_off",
             image_url: "",
+            date_found: "",
         },
     });
 
@@ -84,7 +85,7 @@ export default function ReportFoundPage() {
 
             router.push("/dashboard");
         } catch (error) {
-            console.error("Error submitting report:", error);
+            console.error("Error submitting report:", JSON.stringify(error, null, 2));
             alert("Failed to submit report. Please try again.");
         } finally {
             setLoading(false);

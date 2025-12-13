@@ -50,6 +50,7 @@ export default function ReportLostPage() {
             last_seen_location: "",
             image_url: "",
             contact_info: "",
+            date_incident: "",
         },
     });
 
@@ -87,7 +88,7 @@ export default function ReportLostPage() {
 
             router.push("/dashboard");
         } catch (error) {
-            console.error("Error submitting report:", error);
+            console.error("Error submitting report:", JSON.stringify(error, null, 2));
             alert("Failed to submit report. Please try again.");
         } finally {
             setLoading(false);
