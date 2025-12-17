@@ -63,7 +63,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 2.  Enable **Email** auth.
 3.  **Important**: In **URL Configuration**, add your redirects:
     *   Local: `http://localhost:3000/auth/callback`
-    *   Production: `https://your-project.vercel.app/auth/callback`
+    *   Production: `https://lost-and-found-neon.vercel.app`
 
 ### 5. Run the server
 ```bash
