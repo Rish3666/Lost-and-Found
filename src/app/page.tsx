@@ -17,7 +17,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,_#e2e8f011_0,_transparent_35%),radial-gradient(circle_at_20%_60%,_#0b2f6d08_0,_transparent_25%),radial-gradient(circle_at_80%_30%,_#f5c2420a_0,_transparent_28%)] dark:bg-[radial-gradient(circle_at_top_left,_#0f172a33_0,_transparent_35%),radial-gradient(circle_at_20%_60%,_#1f293733_0,_transparent_25%),radial-gradient(circle_at_80%_30%,_#0b2f6d33_0,_transparent_30%)]" />
-      <main className="relative mx-auto flex max-w-6xl flex-col gap-16 px-6 pb-20 pt-12 sm:px-10 lg:pt-16">
+      <main className="relative mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-20 pt-12 sm:gap-16 sm:px-10 lg:pt-16">
         <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-card/90 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-primary shadow-sm ring-1 ring-primary/20">

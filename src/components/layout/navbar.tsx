@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 import { supabaseServer } from "@/lib/supabase/server";
 import { UserNav } from "@/components/layout/user-nav";
@@ -58,9 +59,47 @@ export const Navbar = async () => {
             </Button>
           )}
           {/* Mobile Menu Trigger (Placeholder for future implementation if needed) */}
-          <Button variant="ghost" size="icon" className="md:hidden text-foreground/70">
-            <Menu className="h-5 w-5" />
-          </Button>
+          {/* Mobile Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden text-foreground/70 hover:bg-white/10 hover:text-primary transition-colors">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] border-l border-white/10 bg-background/95 backdrop-blur-2xl">
+              <SheetHeader className="border-b border-white/5 pb-6 mb-6">
+                <SheetTitle className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
+                    <ShieldCheck className="h-4 w-4" />
+                  </span>
+                  <span className="font-bold text-foreground">Menu</span>
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-2">
+                {[
+                  { href: "/report/lost", label: "Report Lost Item" },
+                  { href: "/report/found", label: "Report Found Item" },
+                  { href: "/items", label: "Browse ALL Items" },
+                  { href: "/dashboard", label: "My Dashboard" }
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5 text-foreground/80 hover:text-primary transition-all duration-300 group ring-1 ring-transparent hover:ring-white/5"
+                  >
+                    <span className="font-medium">{link.label}</span>
+                  </Link>
+                ))}
+                {!user && (
+                  <div className="mt-6 pt-6 border-t border-white/5">
+                    <Button asChild className="w-full rounded-xl shadow-lg shadow-primary/20" size="lg">
+                      <Link href="/login">Log In / Sign Up</Link>
+                    </Button>
+                  </div>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
