@@ -67,13 +67,19 @@ export default function ReportFoundPage() {
                 return;
             }
 
+
+            // Append handover info to description
+            const handoverInfo = values.handover_method === "will_drop_off"
+                ? "Handover: Will drop off at Admin Center"
+                : "Handover: I will keep it and wait for contact";
+
+            const finalDescription = `${values.description}\n\n${handoverInfo}`;
+
             const { error } = await supabase.from("items").insert({
                 title: values.title,
-                description: values.description,
+                description: finalDescription,
                 category: values.category,
                 location: values.location_found,
-                custody_location: values.handover_method === "will_drop_off" ? "admin_center" : "finder_kept",
-                handover_method: values.handover_method,
                 date_incident: values.date_found ? new Date(values.date_found).toISOString() : new Date().toISOString(),
                 type: "FOUND",
                 status: "OPEN",
@@ -86,7 +92,7 @@ export default function ReportFoundPage() {
             router.push("/dashboard");
         } catch (error) {
             console.error("Error submitting report:", JSON.stringify(error, null, 2));
-            alert("Failed to submit report. Please try again.");
+            alert(`Failed to submit report: ${(error as any).message || "Unknown error"}`);
         } finally {
             setLoading(false);
         }

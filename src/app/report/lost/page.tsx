@@ -75,8 +75,7 @@ export default function ReportLostPage() {
                 title: values.title,
                 description: finalDescription,
                 category: values.category,
-                last_seen_location: values.last_seen_location,
-                location: values.last_seen_location, // Mapping last_seen to location for compatibility
+                location: values.last_seen_location,
                 date_incident: values.date_incident ? new Date(values.date_incident).toISOString() : new Date().toISOString(),
                 type: "LOST",
                 status: "OPEN",
@@ -89,7 +88,7 @@ export default function ReportLostPage() {
             router.push("/dashboard");
         } catch (error) {
             console.error("Error submitting report:", JSON.stringify(error, null, 2));
-            alert("Failed to submit report. Please try again.");
+            alert(`Failed to submit report: ${(error as any).message || "Unknown error"}`);
         } finally {
             setLoading(false);
         }

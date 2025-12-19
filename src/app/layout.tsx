@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { ThemeProvider } from "@/context/ThemeContext";
 import QueryProvider from "@/components/providers/query-provider";
 import { ChatWidget } from "@/components/chat-widget";
+import { ClientLayoutWrapper } from "@/components/layout/client-layout-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,9 +36,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <QueryProvider>
-            <Navbar />
-            {children}
-            <ChatWidget />
+            <ClientLayoutWrapper
+              navbar={<Navbar />}
+              chatWidget={<ChatWidget />}
+            >
+              {children}
+            </ClientLayoutWrapper>
           </QueryProvider>
         </ThemeProvider>
       </body>
