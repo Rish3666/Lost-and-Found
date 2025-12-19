@@ -176,9 +176,11 @@ export default function ItemDetailPage() {
                         </Dialog>
                     )}
                     {isOwner && (
-                        <Button variant="outline" className="w-full">
-                            Manage This Item
-                        </Button>
+                        <Link href="/dashboard" className="w-full">
+                            <Button variant="outline" className="w-full">
+                                Manage This Item
+                            </Button>
+                        </Link>
                     )}
                 </div>
             </div>
