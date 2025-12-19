@@ -81,11 +81,11 @@ export function ChatWidget() {
 
                 // Clean up display text:
                 // 1. Remove REDIRECT tags
-                // 2. Remove <function> tags (internal tool calls)
+                // 2. Replace <function> tags with a status indicator so the bubble isn't empty
                 // 3. Clean up specific action prefixes
                 const displayText = fullText
                     .replace(/__REDIRECT:.*$/, '')
-                    .replace(/<function[\s\S]*?<\/function>/g, '')
+                    .replace(/<function[\s\S]*?<\/function>/g, '\n*Checking database...*')
                     .replace('Action: Navigating', 'Navigating');
 
                 setMessages((prev) => {
