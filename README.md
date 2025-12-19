@@ -37,7 +37,7 @@ Follow these steps to set up the project locally.
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/lost-and-found.git
+git clone https://https://github.com/Rish3666/Lost-and-Found
 cd lost-and-found
 npm install
 ```
