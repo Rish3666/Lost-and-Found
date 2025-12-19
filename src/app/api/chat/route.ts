@@ -16,39 +16,45 @@ export async function POST(req: Request) {
     console.log("----------------------------------------");
     const supabase = await supabaseServer();
 
-    const result = streamText({
-        model: groq('llama-3.3-70b-versatile'),
-        system: `You are a helpful assistant for the University Lost & Found Portal.
+    const systemPrompt = `You are a helpful assistant for the University Lost & Found Portal.
     
     IMPORTANT: You are communicating with a simplified text-only client.
     
-    1. **Navigation**: If the user wants to go to a page, you MUST output a special tag in your response: "__REDIRECT:/path__".
-       - Example: "Sure! I'll take you there. __REDIRECT:/report-lost__"
-       - Valid Paths:
-         - "/" (Home)
-         - "/report-lost" (Report Lost Item)
-         - "/report-found" (Report Found Item)
-         - "/browse-items" (Browse Items)
-         - "/my-activity" (My Claims/Dashboard)
-       
-    2. **Searching**: When using 'searchItems', usually found items logic applies (if user lost something, search FOUND items).
+    1. **Transparency**: 
+       - When you search, YOU MUST SAY "Searching for [item]..." first.
+       - **CRITICAL**: If the tool returns "Found 0 items", you MUST explicitly say: "I checked the database, but I couldn't find any [item] reported as lost/found." Do NOT make up items.
     
+    2. **Navigation**: If the user wants to go to a page, you MUST output a special tag in your response: "__REDIRECT:/path__".
+       - Example: "Sure! I'll take you there. __REDIRECT:/report/lost__"
+       - **Valid Paths (ONLY USE THESE)**:
+         - "/" (Home)
+         - "/report/lost" (Report Lost Item) -- DO NOT USE /report-lost
+         - "/report/found" (Report Found Item) -- DO NOT USE /report-found
+         - "/items" (Browse Items)
+         - "/dashboard" (My Claims/Dashboard)
+       
     3. **Always Output Text**: NEVER return an empty response. Describe what you are doing.
     
     Always be polite and concise.
-    `,
+    `;
+
+    const result = streamText({
+        model: groq('llama-3.3-70b-versatile'),
+        system: systemPrompt,
         messages,
         // @ts-ignore
-        maxSteps: 5, // Enable multi-step agent behavior on server
+        maxSteps: 5,
         tools: {
             searchItems: tool({
                 description: 'Search for lost or found items in the database',
                 parameters: z.object({
-                    query: z.string().describe('The search query for items (e.g., "keys", "blue wallet")'),
-                    type: z.enum(['LOST', 'FOUND']).optional().describe('Filter by item type (LOST or FOUND)'),
+                    query: z.string().describe('The search query (e.g., "keys", "blue wallet")'),
+                    type: z.enum(['LOST', 'FOUND']).optional(),
                 }),
                 // @ts-ignore
-                execute: async ({ query, type }: { query: string; type?: 'LOST' | 'FOUND' }) => {
+                execute: async ({ query, type }) => {
+                    console.log(`[Tool] Searching for: "${query}" (Type: ${type || 'ALL'})`);
+
                     let dbQuery = supabase.from('items').select('*');
 
                     if (type) {
@@ -63,14 +69,14 @@ export async function POST(req: Request) {
 
                     if (error) {
                         console.error('Search error:', error);
-                        return 'Error searching for items.';
+                        return `Error: Failed to search. ${error.message}`;
                     }
 
                     if (!data || data.length === 0) {
-                        return 'No matching items found.';
+                        return `Search completed. Found 0 items matching "${query}".`;
                     }
 
-                    return JSON.stringify(data);
+                    return `Found ${data.length} items: ${JSON.stringify(data)}`;
                 },
             }),
             navigate: tool({

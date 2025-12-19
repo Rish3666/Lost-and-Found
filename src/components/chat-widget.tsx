@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageCircle, X, Send, Loader2, MapPin, Search, Bot, ArrowUp, ArrowRight } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, Bot, ArrowUp, Search, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils"; // Assuming utils exists
+import { cn } from "@/lib/utils";
 
 export function ChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
@@ -55,25 +55,45 @@ export function ChatWidget() {
 
             if (!response.body) return;
 
-            // Initialize empty assistant message
+            // Initialize assistant message
             setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let done = false;
+            let fullText = "";
 
             while (!done) {
                 const { value, done: doneReading } = await reader.read();
                 done = doneReading;
                 const chunkValue = decoder.decode(value, { stream: true });
+                fullText += chunkValue;
+
+                // CHECK FOR REDIRECT
+                const redirectMatch = fullText.match(/__REDIRECT:(\/[a-zA-Z0-9\-\/]+)__/);
+                if (redirectMatch) {
+                    const path = redirectMatch[1];
+                    console.log("Redirecting to:", path);
+                    setIsOpen(false); // Close chat
+                    router.push(path); // Go to page
+                    return; // Stop processing stream
+                }
+
+                // Clean up display text:
+                // 1. Remove REDIRECT tags
+                // 2. Remove <function> tags (internal tool calls)
+                // 3. Clean up specific action prefixes
+                const displayText = fullText
+                    .replace(/__REDIRECT:.*$/, '')
+                    .replace(/<function[\s\S]*?<\/function>/g, '')
+                    .replace('Action: Navigating', 'Navigating');
 
                 setMessages((prev) => {
                     const lastMsg = prev[prev.length - 1];
-                    // Append only to the last assistant message
                     if (lastMsg.role === 'assistant') {
                         return [
                             ...prev.slice(0, -1),
-                            { ...lastMsg, content: lastMsg.content + chunkValue }
+                            { ...lastMsg, content: displayText }
                         ];
                     }
                     return prev;
@@ -88,119 +108,168 @@ export function ChatWidget() {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-4">
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-4 font-sans text-foreground">
             {isOpen ? (
-                <Card className="w-[380px] h-[600px] flex flex-col shadow-2xl border-border/50 bg-background/80 backdrop-blur-xl animate-in slide-in-from-bottom-10 fade-in duration-300 rounded-2xl overflow-hidden">
-                    <CardHeader className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent backdrop-blur-md">
-                        <div className="flex flex-row items-center justify-between">
-                            <CardTitle className="text-lg flex items-center gap-2.5 font-semibold text-foreground/90">
-                                <div className="p-2 rounded-lg bg-primary/20 text-primary ring-1 ring-primary/20">
-                                    <MessageCircle className="w-5 h-5" />
+                <Card className="w-[380px] h-[600px] flex flex-col shadow-2xl border-white/10 bg-[#0f172a]/95 backdrop-blur-xl animate-in slide-in-from-bottom-10 fade-in duration-300 rounded-3xl overflow-hidden ring-1 ring-white/5">
+                    {/* Header */}
+                    <CardHeader className="p-0 border-b border-border/40">
+                        <div className="bg-gradient-to-r from-blue-600/20 via-violet-600/20 to-background/5 p-4 flex flex-row items-center justify-between backdrop-blur-3xl">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-blue-600/10 text-blue-500 ring-1 ring-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
+                                    <MessageCircle className="w-5 h-5 fill-current" />
                                 </div>
-                                <div className="flex flex-col">
-                                    <span>Lost & Found AI</span>
-                                    <span className="text-[10px] font-normal text-muted-foreground/80 -mt-0.5">Always here to help</span>
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="font-bold text-base tracking-tight text-slate-100">Lost & Found AI</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                        </span>
+                                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Online</span>
+                                    </div>
                                 </div>
-                            </CardTitle>
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={toggleChat}
-                                className="h-8 w-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                className="h-8 w-8 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all hover:rotate-90"
                             >
                                 <X className="w-4 h-4" />
                             </Button>
                         </div>
                     </CardHeader>
 
-                    <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth" ref={scrollRef}>
+                    {/* Chat Area */}
+                    <CardContent
+                        className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth"
+                        ref={scrollRef}
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {/* Hide scrollbar for Chrome/Safari/Edge */}
+                        <style jsx global>{`
+                            .scroll-smooth::-webkit-scrollbar {
+                                display: none;
+                            }
+                        `}</style>
+
                         {messages.length === 0 && (
-                            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-6 opacity-0 animate-in fade-in zoom-in duration-500 delay-100 fill-mode-forwards">
-                                <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-primary/20 to-primary/5 flex items-center justify-center rotate-3 transform transition-transform hover:rotate-6 shadow-lg shadow-primary/5">
-                                    <Bot className="w-12 h-12 text-primary/80" />
+                            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-8 opacity-0 animate-in fade-in zoom-in duration-700 delay-100 fill-mode-forwards select-none">
+                                <div className="relative">
+                                    <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/30 to-purple-500/30 rounded-full blur-2xl opacity-50 animate-pulse"></div>
+                                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 border border-white/10 flex items-center justify-center rotate-3 transform shadow-xl relative z-10">
+                                        <Bot className="w-10 h-10 text-blue-500" />
+                                    </div>
                                 </div>
-                                <div className="space-y-2 max-w-[250px]">
-                                    <h3 className="font-semibold text-lg text-foreground">How can I help?</h3>
-                                    <p className="text-muted-foreground text-sm leading-relaxed">
-                                        I can help you find lost items, search the database, or guide you through the reporting process.
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-xl tracking-tight bg-gradient-to-b from-white to-white/70 bg-clip-text text-transparent">
+                                        How can I help?
+                                    </h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed max-w-[260px] mx-auto">
+                                        Find items, report losses, or ask about campus policies.
                                     </p>
                                 </div>
-                                <div className="grid grid-cols-1 gap-2 w-full">
+                                <div className="grid grid-cols-1 gap-2.5 w-full">
                                     {["I lost my wallet", "Found a set of keys", "Search for 'Blue Umbrella'"].map((suggestion, i) => (
                                         <button
                                             key={i}
                                             onClick={() => setInput(suggestion)}
-                                            className="text-xs text-left px-3 py-2.5 rounded-xl bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200 border border-transparent hover:border-primary/20 truncate"
+                                            className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-left transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                                         >
-                                            "{suggestion}"
+                                            <div className="p-1.5 rounded-md bg-white/5 text-slate-400 group-hover:text-blue-400 transition-colors">
+                                                <Search className="w-3.5 h-3.5" />
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-300 group-hover:text-white">
+                                                {suggestion}
+                                            </span>
+                                            <div className="absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 duration-200">
+                                                <ArrowRight className="w-3.5 h-3.5 text-blue-400" />
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {messages.map((m: any, idx: number) => (
-                            <div
-                                key={idx}
-                                className={cn(
-                                    "flex gap-3 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300",
-                                    m.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
-                                )}
-                            >
-                                {m.role !== "user" && (
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 shadow-sm border border-white/10 mt-1">
-                                        <Bot className="w-4 h-4 text-primary" />
-                                    </div>
-                                )}
-                                <div className="flex flex-col gap-1.5 min-w-0">
-                                    {m.role !== "user" && idx === 0 && (
-                                        <span className="text-[10px] text-muted-foreground ml-1">AI Assistant</span>
+                        {messages.map((m: any, idx: number) => {
+                            // Skip rendering empty assistant messages unless it's the very last one (which might be typing)
+                            if (m.role === 'assistant' && !m.content && idx !== messages.length - 1) return null;
+
+                            return (
+                                <div
+                                    key={idx}
+                                    className={cn(
+                                        "flex gap-3 max-w-[85%] animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out",
+                                        m.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
                                     )}
-                                    <div
-                                        className={cn(
-                                            "rounded-2xl px-4 py-2.5 text-sm shadow-sm break-words",
-                                            m.role === "user"
-                                                ? "bg-primary text-primary-foreground rounded-tr-sm"
-                                                : "bg-muted/80 backdrop-blur-sm border border-border/50 text-foreground rounded-tl-sm"
-                                        )}
-                                    >
-                                        <div className="bg-local leading-relaxed">
-                                            {m.content}
+                                >
+                                    {m.role !== "user" && (
+                                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center shrink-0 shadow-lg mt-auto mb-0.5">
+                                            <Bot className="w-4 h-4 text-blue-400" />
                                         </div>
+                                    )}
+
+                                    <div className={cn(
+                                        "flex flex-col gap-1 min-w-0",
+                                        m.role === "user" ? "items-end" : "items-start"
+                                    )}>
+                                        <div
+                                            className={cn(
+                                                "px-5 py-3.5 text-sm shadow-md transition-all",
+                                                m.role === "user"
+                                                    ? "bg-blue-600 text-white rounded-[20px] rounded-br-[4px]"
+                                                    : "bg-slate-800/80 backdrop-blur-md border border-white/5 text-slate-100 rounded-[20px] rounded-bl-[4px]"
+                                            )}
+                                        >
+                                            {m.content ? (
+                                                <div className="leading-relaxed whitespace-pre-wrap">{m.content}</div>
+                                            ) : (
+                                                <div className="flex gap-1 h-5 items-center px-1">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce [animation-delay:-0.3s]"></div>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce [animation-delay:-0.15s]"></div>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce"></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-[10px] text-slate-500 px-1 select-none">
+                                            {m.role === "user" ? "You" : "AI Assistant"}
+                                        </span>
                                     </div>
-
-                                    {/* Tool Results (Simplified Style) */}
-                                    {/* Note: In manual mode, we render everything in text, but if you have custom part parsers, add them here. 
-                                        For now, we assume the server returns text describing the action. */}
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
 
-                        {isLoading && (
-                            <div className="flex items-center gap-2 text-muted-foreground text-xs ml-11 animate-pulse">
-                                <div className="flex gap-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce delay-0"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce delay-150"></div>
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce delay-300"></div>
+                        {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+                            <div className="flex gap-3 max-w-[85%] animate-in fade-in">
+                                <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center shrink-0 shadow-lg mt-auto mb-0.5">
+                                    <Bot className="w-4 h-4 text-blue-400" />
                                 </div>
-                                <span className="opacity-70">Thinking...</span>
+                                <div className="bg-slate-800/80 border border-white/5 rounded-[20px] rounded-bl-[4px] px-5 py-3.5 flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400/50 animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400/50 animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400/50 animate-bounce"></div>
+                                </div>
                             </div>
                         )}
 
                         {error && (
-                            <div className="text-xs text-destructive bg-destructive/10 p-2 rounded-lg text-center animate-in shake">
+                            <div className="mx-auto max-w-[90%] text-xs text-red-300 bg-red-900/20 border border-red-500/20 p-3 rounded-xl text-center flex items-center justify-center gap-2 animate-in slide-in-from-top-2">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                </span>
                                 {error}
                             </div>
                         )}
                     </CardContent>
 
-                    <CardFooter className="p-3 border-t border-border/50 bg-background/50 backdrop-blur-md">
-                        <form onSubmit={handleSubmit} className="flex w-full gap-2 items-end relative">
+                    <CardFooter className="p-4 border-t border-border/40 bg-[#0f172a]/95 backdrop-blur-3xl">
+                        <form onSubmit={handleSubmit} className="flex w-full gap-2 items-end relative rounded-3xl bg-white/5 p-1 border border-white/10 focus-within:border-blue-500/30 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all duration-300">
                             <Input
                                 value={input}
                                 onChange={handleInputChange}
-                                placeholder="Type a message..."
-                                className="flex-1 min-h-[44px] max-h-[100px] rounded-2xl bg-muted/50 border-transparent focus:border-primary/20 focus:bg-background shadow-inner resize-none py-3 pr-10 transition-all"
+                                placeholder="Message..."
+                                className="flex-1 min-h-[48px] max-h-[120px] border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-4 py-3 placeholder:text-slate-400 text-slate-100 resize-none"
                                 disabled={isLoading}
                                 autoComplete="off"
                             />
@@ -209,11 +278,11 @@ export function ChatWidget() {
                                 size="icon"
                                 disabled={isLoading || !input.trim()}
                                 className={cn(
-                                    "absolute right-1.5 bottom-1.5 h-8 w-8 rounded-full transition-all duration-300 shadow-sm",
-                                    input.trim() ? "bg-primary text-primary-foreground hover:scale-105" : "bg-muted text-muted-foreground hover:bg-muted"
+                                    "h-10 w-10 rounded-full transition-all duration-300 shadow-sm mb-0.5 mr-0.5",
+                                    input.trim() ? "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 hover:shadow-blue-500/25" : "bg-transparent text-slate-500"
                                 )}
                             >
-                                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 ml-0.5" />}
+                                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowUp className="h-5 w-5 stroke-[2.5]" />}
                             </Button>
                         </form>
                     </CardFooter>
@@ -222,9 +291,9 @@ export function ChatWidget() {
                 <Button
                     onClick={toggleChat}
                     size="lg"
-                    className="rounded-full h-16 w-16 shadow-lg hover:shadow-primary/25 hover:scale-105 transition-all duration-300 bg-primary text-primary-foreground border-4 border-background"
+                    className="rounded-full h-14 w-14 shadow-2xl hover:shadow-blue-500/40 hover:scale-110 active:scale-95 transition-all duration-500 bg-gradient-to-tr from-blue-600 to-violet-600 text-white border-4 border-[#0f172a]/80 backdrop-blur-sm group p-0 flex items-center justify-center"
                 >
-                    <MessageCircle className="h-8 w-8" />
+                    <MessageCircle className="h-7 w-7 stroke-[2.5] group-hover:rotate-12 transition-transform duration-300 drop-shadow-md" />
                 </Button>
             )}
         </div>
