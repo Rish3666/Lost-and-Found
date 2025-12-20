@@ -43,7 +43,7 @@ export default function AdminPage() {
     // --- QUERIES ---
 
     // 1. Stats
-    const { data: stats } = useQuery({
+    const { data: stats, error: statsError } = useQuery({
         queryKey: ["admin-stats"],
         enabled: isAdmin === true,
         queryFn: async () => {
@@ -51,6 +51,8 @@ export default function AdminPage() {
             const deletedItemsCount = await supabase.from("items").select("*", { count: "exact", head: true }).eq("is_deleted", true);
             const usersCount = await supabase.from("profiles").select("*", { count: "exact", head: true });
             const claimsCount = await supabase.from("claims").select("*", { count: "exact", head: true }).eq("status", "PENDING");
+
+            if (itemsCount.error) throw itemsCount.error; // Throw if main query fails
 
             return {
                 items: itemsCount.count || 0,
@@ -78,7 +80,7 @@ export default function AdminPage() {
     });
 
     // 3. All Items (Active)
-    const { data: allItems, isLoading: itemsLoading } = useQuery({
+    const { data: allItems, isLoading: itemsLoading, error: itemsError } = useQuery({
         queryKey: ["admin-items"],
         enabled: isAdmin === true,
         queryFn: async () => {
@@ -238,6 +240,13 @@ export default function AdminPage() {
                 </Card>
             </div>
 
+            {statsError && (
+                <div className="mb-8 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-400">
+                    <p className="font-bold">Error loading stats:</p>
+                    <pre className="mt-2 overflow-auto text-xs">{JSON.stringify(statsError, null, 2)}</pre>
+                </div>
+            )}
+
             <Tabs defaultValue="claims" className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="claims">Pending Claims</TabsTrigger>
@@ -321,7 +330,12 @@ export default function AdminPage() {
                             <CardTitle>Item Management</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {itemsLoading ? (
+                            {itemsError ? (
+                                <div className="p-8 text-center text-red-400">
+                                    <p>Error loading items:</p>
+                                    <pre className="mt-2 text-xs">{itemsError.message}</pre>
+                                </div>
+                            ) : itemsLoading ? (
                                 <div className="text-center py-8">Loading items...</div>
                             ) : (
                                 <div className="space-y-4">
