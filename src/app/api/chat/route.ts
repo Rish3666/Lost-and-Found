@@ -15,8 +15,6 @@ export async function POST(req: Request) {
         console.log("----------------------------------------");
         console.log("API CALLED WITH MODEL: llama-3.3-70b-versatile");
         console.log("----------------------------------------");
-        const supabase = await supabaseServer();
-
         const systemPrompt = `You are a helpful assistant for the University Lost & Found Portal.
     
     IMPORTANT: You are communicating with a simplified text-only client.
@@ -55,6 +53,9 @@ export async function POST(req: Request) {
                     // @ts-ignore
                     execute: async ({ query, type }) => {
                         console.log(`[Tool] Searching for: "${query}" (Type: ${type || 'ALL'})`);
+
+                        // Initialize Supabase only when needed
+                        const supabase = await supabaseServer();
 
                         // Select specific fields to keep context size manageable
                         let dbQuery = supabase.from('items')
