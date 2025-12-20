@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 
 import { supabaseServer } from "@/lib/supabase/server";
 import { UserNav } from "@/components/layout/user-nav";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 
 
@@ -51,6 +52,7 @@ export const Navbar = async () => {
 
         <div className="flex items-center gap-3 pl-6 border-l border-white/10 ml-2">
           <ThemeToggle />
+          {user && <NotificationBell />}
           {user ? (
             <UserNav user={user} />
           ) : (

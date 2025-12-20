@@ -8,12 +8,15 @@ interface ClientLayoutWrapperProps {
     chatWidget: React.ReactNode;
 }
 
+import { ProfileOnboarding } from "@/components/auth/profile-onboarding";
+
 export function ClientLayoutWrapper({ children, navbar, chatWidget }: ClientLayoutWrapperProps) {
     const pathname = usePathname();
     const isLoginPage = pathname === "/login";
 
     return (
         <>
+            <ProfileOnboarding />
             {!isLoginPage && navbar}
             {children}
             {!isLoginPage && chatWidget}

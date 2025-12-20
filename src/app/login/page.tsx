@@ -10,6 +10,7 @@ import Link from "next/link";
 
 export default function LoginPage() {
     const router = useRouter();
+    const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -40,6 +41,9 @@ export default function LoginPage() {
                     password,
                     options: {
                         emailRedirectTo: `${window.location.origin}/auth/callback`,
+                        data: {
+                            full_name: fullName,
+                        },
                     },
                 });
                 if (error) throw error;
@@ -84,6 +88,26 @@ export default function LoginPage() {
                                 {message}
                             </div>
                         )}
+
+                        {mode === "signup" && (
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="fullName"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Full Name
+                                </label>
+                                <Input
+                                    id="fullName"
+                                    type="text"
+                                    required
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    placeholder="John Doe"
+                                />
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <label
                                 htmlFor="email"
