@@ -33,7 +33,6 @@ export async function POST(req: Request) {
          - "/report/found" (Report Found Item) -- DO NOT USE /report-found
          - "/items" (Browse Items)
          - "/dashboard" (My Claims/Dashboard)
-         - "/admin" (Admin Dashboard)
        
     3. **Always Output Text**: NEVER return an empty response. Describe what you are doing.
     
