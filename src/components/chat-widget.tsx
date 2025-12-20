@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, X, Send, Loader2, Bot, ArrowUp, Search, ArrowRight } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function ChatWidget() {
@@ -18,6 +18,7 @@ export function ChatWidget() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         // Scroll to bottom whenever messages change
@@ -37,6 +38,8 @@ export function ChatWidget() {
         if (!input.trim() || isLoading) return;
 
         const userMessage = { role: "user", content: input };
+        // Clean input for display
+
         const newMessages = [...messages, userMessage];
 
         setMessages(newMessages);
@@ -48,7 +51,7 @@ export function ChatWidget() {
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: newMessages }),
+                body: JSON.stringify({ messages: newMessages, pathname }), // Send pathname context
             });
 
             if (!response.ok) {
@@ -72,11 +75,12 @@ export function ChatWidget() {
                 fullText += chunkValue;
 
                 // CHECK FOR REDIRECT
-                const redirectMatch = fullText.match(/__REDIRECT:(\/[a-zA-Z0-9\-\/]+)__/);
+                // Updated regex to capture everything until the closing tag (handles spaces in queries)
+                const redirectMatch = fullText.match(/__REDIRECT:(.+?)__/);
                 if (redirectMatch) {
                     const path = redirectMatch[1];
                     console.log("Redirecting to:", path);
-                    setIsOpen(false); // Close chat
+                    // setIsOpen(false); // Don't close chat on redirect, let user decide
                     router.push(path); // Go to page
                     return; // Stop processing stream
                 }

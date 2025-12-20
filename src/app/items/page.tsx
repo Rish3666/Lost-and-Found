@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSearchParams } from "next/navigation";
 import {
     Select,
     SelectContent,
@@ -17,7 +18,9 @@ import { MapPin, Search } from "lucide-react";
 
 export default function ItemsPage() {
     const supabase = supabaseBrowser();
-    const [search, setSearch] = useState("");
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("search") || "";
+    const [search, setSearch] = useState(initialSearch);
     const [category, setCategory] = useState<string>("ALL");
     const [itemType, setItemType] = useState<string>("ALL");
 
