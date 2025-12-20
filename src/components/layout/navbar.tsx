@@ -17,7 +17,7 @@ export const Navbar = async () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/60 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
       <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-      <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between px-6 sm:px-10 relative">
+      <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-10 relative">
         <Link
           href="/"
           className="group flex items-center gap-3 text-lg font-semibold text-foreground transition-all duration-300 hover:scale-[1.02]"
