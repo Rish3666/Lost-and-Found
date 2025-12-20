@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { supabaseBrowser } from "@/lib/supabase/browser";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { MapPin, Search } from "lucide-react";
 
-export default function ItemsPage() {
+function ItemsContent() {
     const supabase = supabaseBrowser();
     const searchParams = useSearchParams();
     const initialSearch = searchParams.get("search") || "";
@@ -144,5 +144,27 @@ export default function ItemsPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function ItemsPage() {
+    return (
+        <Suspense fallback={
+            <div className="container mx-auto max-w-6xl px-4 py-8">
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <div className="h-10 w-48 animate-pulse rounded bg-muted"></div>
+                        <div className="mt-2 h-5 w-64 animate-pulse rounded bg-muted"></div>
+                    </div>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-64 animate-pulse rounded-xl bg-muted" />
+                    ))}
+                </div>
+            </div>
+        }>
+            <ItemsContent />
+        </Suspense>
     );
 }
