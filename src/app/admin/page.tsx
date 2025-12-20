@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import { Loader2, Check, X, ShieldAlert, Trash2, Package, Users, AlertCircle } from "lucide-react";
+import { Loader2, Check, X, ShieldAlert, Trash2, Package, Users, AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -47,12 +47,14 @@ export default function AdminPage() {
         queryKey: ["admin-stats"],
         enabled: isAdmin === true,
         queryFn: async () => {
-            const itemsCount = await supabase.from("items").select("*", { count: "exact", head: true });
+            const itemsCount = await supabase.from("items").select("*", { count: "exact", head: true }).eq("is_deleted", false);
+            const deletedItemsCount = await supabase.from("items").select("*", { count: "exact", head: true }).eq("is_deleted", true);
             const usersCount = await supabase.from("profiles").select("*", { count: "exact", head: true });
             const claimsCount = await supabase.from("claims").select("*", { count: "exact", head: true }).eq("status", "PENDING");
 
             return {
                 items: itemsCount.count || 0,
+                deletedItems: deletedItemsCount.count || 0,
                 users: usersCount.count || 0,
                 pendingClaims: claimsCount.count || 0
             };
@@ -75,7 +77,7 @@ export default function AdminPage() {
         },
     });
 
-    // 3. All Items
+    // 3. All Items (Active)
     const { data: allItems, isLoading: itemsLoading } = useQuery({
         queryKey: ["admin-items"],
         enabled: isAdmin === true,
@@ -83,7 +85,23 @@ export default function AdminPage() {
             const { data, error } = await supabase
                 .from("items")
                 .select("*, profiles(full_name)")
+                .eq("is_deleted", false)
                 .order("created_at", { ascending: false });
+            if (error) throw error;
+            return data;
+        },
+    });
+
+    // 4. Deleted Items
+    const { data: deletedItems, isLoading: deletedItemsLoading } = useQuery({
+        queryKey: ["admin-deleted-items"],
+        enabled: isAdmin === true,
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("items")
+                .select("*, profiles(full_name)")
+                .eq("is_deleted", true)
+                .order("deleted_at", { ascending: false });
             if (error) throw error;
             return data;
         },
@@ -119,15 +137,37 @@ export default function AdminPage() {
 
     const deleteItem = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await supabase.from("items").delete().eq("id", id);
+            const { error } = await supabase
+                .from("items")
+                .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+                .eq("id", id);
             if (error) throw error;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin-items"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-deleted-items"] });
             queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
         },
         onError: (error) => {
             alert("Failed to delete item: " + error.message);
+        }
+    });
+
+    const restoreItem = useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase
+                .from("items")
+                .update({ is_deleted: false, deleted_at: null })
+                .eq("id", id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin-items"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-deleted-items"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+        },
+        onError: (error) => {
+            alert("Failed to restore item: " + error.message);
         }
     });
 
@@ -155,15 +195,25 @@ export default function AdminPage() {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid gap-4 md:grid-cols-3 mb-8">
+            <div className="grid gap-4 md:grid-cols-4 mb-8">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+                        <CardTitle className="text-sm font-medium">Active Items</CardTitle>
                         <Package className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats?.items || 0}</div>
                         <p className="text-xs text-muted-foreground">Reported across platform</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Deleted Items</CardTitle>
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats?.deletedItems || 0}</div>
+                        <p className="text-xs text-muted-foreground">Soft deleted items</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -192,6 +242,7 @@ export default function AdminPage() {
                 <TabsList>
                     <TabsTrigger value="claims">Pending Claims</TabsTrigger>
                     <TabsTrigger value="items">All Items</TabsTrigger>
+                    <TabsTrigger value="deleted">Deleted Items</TabsTrigger>
                 </TabsList>
 
                 {/* TAB: CLAIMS */}
@@ -298,6 +349,55 @@ export default function AdminPage() {
                                                 }}
                                             >
                                                 <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* TAB: DELETED ITEMS */}
+                <TabsContent value="deleted">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Deleted Items</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {deletedItemsLoading ? (
+                                <div className="text-center py-8">Loading deleted items...</div>
+                            ) : deletedItems?.length === 0 ? (
+                                <div className="py-8 text-center text-muted-foreground">
+                                    No deleted items found.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {deletedItems?.map((item) => (
+                                        <div key={item.id} className="flex items-center justify-between rounded-lg border p-4 bg-muted/20 opacity-75 hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-12 w-12 overflow-hidden rounded-md bg-muted grayscale">
+                                                    {item.image_url && <img src={item.image_url} className="h-full w-full object-cover" />}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium line-through text-muted-foreground">{item.title}</p>
+                                                    <div className="flex gap-2 text-xs text-muted-foreground">
+                                                        <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">Deleted</Badge>
+                                                        <span>Deleted on {item.deleted_at ? new Date(item.deleted_at).toLocaleDateString() : 'Unknown'}</span>
+                                                        <span>• by {item.profiles?.full_name || "Unknown"}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    if (confirm("Restore this item?")) restoreItem.mutate(item.id);
+                                                }}
+                                                className="gap-2"
+                                            >
+                                                <RotateCcw className="h-4 w-4" />
+                                                Restore
                                             </Button>
                                         </div>
                                     ))}

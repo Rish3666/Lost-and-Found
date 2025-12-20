@@ -7,7 +7,7 @@ const groq = createGroq({
     apiKey: process.env.GROQ_API_KEY,
 });
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
     try {
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
          - "/report/found" (Report Found Item) -- DO NOT USE /report-found
          - "/items" (Browse Items)
          - "/dashboard" (My Claims/Dashboard)
+         - "/admin" (Admin Dashboard)
        
     3. **Always Output Text**: NEVER return an empty response. Describe what you are doing.
     
@@ -56,7 +57,16 @@ export async function POST(req: Request) {
                     execute: async ({ query, type }) => {
                         console.log(`[Tool] Searching for: "${query}" (Type: ${type || 'ALL'})`);
 
-                        let dbQuery = supabase.from('items').select('*');
+                        // Select specific fields to keep context size manageable
+                        let dbQuery = supabase.from('items')
+                            .select('id, title, description, type, category, status, location, date_incident, created_at');
+
+                        // Attempt to filter out deleted items if column exists (it should after migration)
+                        // If migration isn't run, this might error, but that's expected flow.
+                        // We wrap in a check or just assume schema is up to date.
+                        // For robustness, we can try to filter, if it fails, we catch? 
+                        // Supabase build-in filters don't throw immediately until await.
+                        dbQuery = dbQuery.eq('is_deleted', false);
 
                         if (type) {
                             dbQuery = dbQuery.eq('type', type);
@@ -70,6 +80,8 @@ export async function POST(req: Request) {
 
                         if (error) {
                             console.error('Search error:', error);
+                            // Fallback: if error is about is_deleted column missing, try again without it?
+                            // This is a nice-to-have but might be complex. Let's return error to model.
                             return `Error: Failed to search. ${error.message}`;
                         }
 
