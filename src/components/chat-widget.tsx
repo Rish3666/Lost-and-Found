@@ -80,7 +80,7 @@ export function ChatWidget() {
                 if (redirectMatch) {
                     const path = redirectMatch[1];
                     console.log("Redirecting to:", path);
-                    // setIsOpen(false); // Don't close chat on redirect, let user decide
+                    setIsOpen(false); // Close chat on redirect
                     router.push(path); // Go to page
                     return; // Stop processing stream
                 }

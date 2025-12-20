@@ -1,5 +1,6 @@
 import { MapPin, Calendar } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "./button";
 
 interface ItemCardProps {
@@ -27,10 +28,13 @@ export function ItemCard({
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md">
             <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-muted">
                 {imageUrl ? (
-                    <img
+                    <Image
                         src={imageUrl}
                         alt={title}
-                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-300 hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        priority
                     />
                 ) : (
                     <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">

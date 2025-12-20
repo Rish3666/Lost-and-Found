@@ -6,6 +6,7 @@ import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Calendar, User } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import {
     Dialog,
@@ -94,9 +95,16 @@ export default function ItemDetailPage() {
             </Link>
 
             <div className="grid gap-8 md:grid-cols-2">
-                <div className="overflow-hidden rounded-2xl border border-border bg-muted">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-muted">
                     {item.image_url ? (
-                        <img src={item.image_url} alt={item.title} className="h-full w-full object-cover" />
+                        <Image
+                            src={item.image_url}
+                            alt={item.title}
+                            fill
+                            className="object-cover"
+                            priority
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                        />
                     ) : (
                         <div className="flex h-96 w-full items-center justify-center text-muted-foreground">
                             No Image Available
