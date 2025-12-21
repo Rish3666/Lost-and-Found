@@ -114,7 +114,12 @@ function ItemsContent() {
                     {items?.map((item) => (
                         <Link key={item.id} href={`/items/${item.id}`}>
                             <div className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md">
-                                <div className="aspect-video w-full overflow-hidden bg-muted">
+                                <div className="aspect-video w-full overflow-hidden bg-muted relative">
+                                    {item.reward_amount && item.reward_amount > 0 && (
+                                        <div className="absolute top-2 left-2 z-10 rounded-full bg-green-500/90 px-3 py-1 text-xs font-bold text-white shadow-sm backdrop-blur">
+                                            Reward: ₹{item.reward_amount}
+                                        </div>
+                                    )}
                                     {item.image_url ? (
                                         <img src={item.image_url} alt={item.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     ) : (
