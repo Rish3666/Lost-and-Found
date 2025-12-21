@@ -192,6 +192,7 @@ export default function ReportLostPage() {
                                 <FormControl>
                                     <Input
                                         type="number"
+                                        min="0"
                                         placeholder="e.g. 500"
                                         {...field}
                                         onChange={(e) => {
