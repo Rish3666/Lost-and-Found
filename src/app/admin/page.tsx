@@ -64,17 +64,20 @@ export default function AdminPage() {
     });
 
     // 2. Pending Claims
-    const { data: claims, isLoading: claimsLoading } = useQuery({
+    const { data: claims, isLoading: claimsLoading, error: claimsError } = useQuery({
         queryKey: ["admin-claims"],
         enabled: isAdmin === true,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from("claims")
-                .select("*, items(*), profiles!claimant_id(full_name, email)")
+                .select("*, items(*), profiles(*)")
                 .eq("status", "PENDING")
                 .order("created_at", { ascending: true });
 
-            if (error) throw error;
+            if (error) {
+                console.error("Error fetching claims:", error);
+                throw error;
+            }
             return data;
         },
     });
@@ -266,6 +269,12 @@ export default function AdminPage() {
                         </div>
                     ) : (
                         <div className="space-y-6">
+                            {claimsError && (
+                                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600">
+                                    <p className="font-bold">Error loading claims:</p>
+                                    <pre className="mt-1 text-xs">{claimsError.message}</pre>
+                                </div>
+                            )}
                             {claims?.map((claim) => (
                                 <div key={claim.id} className="rounded-xl border bg-card p-6 shadow-sm">
                                     <div className="grid gap-6 md:grid-cols-[1fr_1fr_auto]">
