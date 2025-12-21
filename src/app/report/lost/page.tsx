@@ -34,6 +34,7 @@ const formSchema = z.object({
     date_incident: z.string().optional(),
     contact_info: z.string().optional(),
     image_url: z.string().optional(),
+    reward_amount: z.number().min(0).optional(),
 });
 
 export default function ReportLostPage() {
@@ -51,6 +52,7 @@ export default function ReportLostPage() {
             image_url: "",
             contact_info: "",
             date_incident: "",
+            reward_amount: undefined,
         },
     });
 
@@ -81,6 +83,7 @@ export default function ReportLostPage() {
                 status: "OPEN",
                 image_url: values.image_url,
                 user_id: user.id,
+                reward_amount: values.reward_amount,
             });
 
             if (error) throw error;
@@ -179,6 +182,29 @@ export default function ReportLostPage() {
                             )}
                         />
                     </div>
+
+                    <FormField
+                        control={form.control}
+                        name="reward_amount"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Reward Amount (₹) - Optional</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        placeholder="e.g. 500"
+                                        {...field}
+                                        onChange={(e) => {
+                                            const val = e.target.valueAsNumber;
+                                            field.onChange(isNaN(val) ? undefined : val);
+                                        }}
+                                        value={field.value ?? ""}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     <FormField
                         control={form.control}

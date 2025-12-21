@@ -118,8 +118,15 @@ export default function ItemDetailPage() {
                             {item.type}
                         </div>
                         <h1 className="mt-4 text-3xl font-bold">{item.title}</h1>
-                        <div className="mt-2 text-lg text-muted-foreground">
-                            Category: {item.category}
+                        <div className="mt-2 flex items-center gap-4">
+                            <span className="text-lg text-muted-foreground">
+                                Category: {item.category}
+                            </span>
+                            {item.reward_amount && item.reward_amount > 0 && (
+                                <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700 ring-1 ring-green-600/20">
+                                    Reward: ₹{item.reward_amount}
+                                </span>
+                            )}
                         </div>
                     </div>
 

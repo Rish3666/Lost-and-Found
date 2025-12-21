@@ -12,6 +12,7 @@ interface ItemCardProps {
     date: string | null;
     type: "LOST" | "FOUND";
     category: string;
+    reward_amount?: number | null;
 }
 
 export function ItemCard({
@@ -23,6 +24,7 @@ export function ItemCard({
     date,
     type,
     category,
+    reward_amount,
 }: ItemCardProps) {
     return (
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md">
@@ -44,6 +46,11 @@ export function ItemCard({
                 <div className="absolute top-2 right-2 rounded-full bg-background/80 px-2 py-1 text-xs font-semibold backdrop-blur">
                     {type}
                 </div>
+                {reward_amount && reward_amount > 0 && (
+                    <div className="absolute top-2 left-2 rounded-full bg-green-500/90 px-3 py-1 text-xs font-bold text-white shadow-sm backdrop-blur">
+                        Reward: ₹{reward_amount}
+                    </div>
+                )}
             </div>
             <div className="space-y-1">
                 <div className="flex items-center justify-between">

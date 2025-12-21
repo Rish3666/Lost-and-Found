@@ -37,6 +37,7 @@ export const Navbar = async () => {
             { href: "/report/lost", label: "Report Lost" },
             { href: "/report/found", label: "Report Found" },
             { href: "/items", label: "Browse Items" },
+            { href: "/rewards", label: "Rewards" },
             { href: "/dashboard", label: "Dashboard" }
           ].map((link) => (
             <Link
@@ -82,6 +83,7 @@ export const Navbar = async () => {
                   { href: "/report/lost", label: "Report Lost Item" },
                   { href: "/report/found", label: "Report Found Item" },
                   { href: "/items", label: "Browse ALL Items" },
+                  { href: "/rewards", label: "Rewards" },
                   { href: "/dashboard", label: "My Dashboard" }
                 ].map((link) => (
                   <Link

@@ -32,6 +32,7 @@ export interface Item {
   user_id: string;
   image_url: string | null;
   date_incident?: string | null; // when lost/found
+  reward_amount?: number | null;
   created_at: string;
   updated_at: string;
 }
