@@ -52,6 +52,12 @@ export async function POST(req: Request) {
     DO NOT use the 'searchItems' tool unless explicitly asked to "check the database" here in the chat. PREFER redirects.
        
     3. **Always Output Text**: NEVER return an empty response. Describe what you are doing.
+
+    4. **Language Support**:
+       - You support **English**, **Hindi**, and **Telugu**.
+       - Detect the user's language and respond in the same language.
+       - For Hindi/Telugu, you can use the native script (Devanagari/Telugu) or Hinglish/Tanglish (Latin script) based on the user's input style.
+       - Ensure all redirects (\`__REDIRECT:/...__\`) work exactly the same regardless of the language used.
     
     Always be polite and concise.
     `;
@@ -71,7 +77,7 @@ export async function POST(req: Request) {
                     }),
                     // @ts-ignore
                     execute: async ({ query, type }) => {
-                        console.log(`[Tool] Searching for: "${query}" (Type: ${type || 'ALL'})`);
+                        console.log(`[Tool] Searching for: "${query}"(Type: ${type || 'ALL'})`);
 
                         // Initialize Supabase only when needed
                         const supabase = await supabaseServer();
@@ -92,7 +98,7 @@ export async function POST(req: Request) {
                         }
 
                         if (query) {
-                            dbQuery = dbQuery.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+                            dbQuery = dbQuery.or(`title.ilike.% ${query}%, description.ilike.% ${query}% `);
                         }
 
                         const { data, error } = await dbQuery.limit(5).order('created_at', { ascending: false });
@@ -101,14 +107,14 @@ export async function POST(req: Request) {
                             console.error('Search error:', error);
                             // Fallback: if error is about is_deleted column missing, try again without it?
                             // This is a nice-to-have but might be complex. Let's return error to model.
-                            return `Error: Failed to search. ${error.message}`;
+                            return `Error: Failed to search.${error.message} `;
                         }
 
                         if (!data || data.length === 0) {
-                            return `Search completed. Found 0 items matching "${query}".`;
+                            return `Search completed.Found 0 items matching "${query}".`;
                         }
 
-                        return `Found ${data.length} items: ${JSON.stringify(data)}`;
+                        return `Found ${data.length} items: ${JSON.stringify(data)} `;
                     },
                 }),
                 navigate: tool({
@@ -119,7 +125,7 @@ export async function POST(req: Request) {
                     // @ts-ignore
                     execute: async ({ path }: { path: string }) => {
                         // The model should output the tag, but this reinforces it in the tool result too
-                        return `Action: Navigating to ${path}. __REDIRECT:${path}__`;
+                        return `Action: Navigating to ${path}.__REDIRECT:${path} __`;
                     },
                 }),
             },
