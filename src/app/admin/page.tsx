@@ -360,7 +360,6 @@ export default function AdminPage() {
                                                         <Badge variant="outline">{item.type}</Badge>
                                                         <span>{item.status}</span>
                                                         <span>• {new Date(item.created_at).toLocaleDateString()}</span>
-                                                        <span>• by {item.profiles?.full_name || "Unknown"}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -407,7 +406,6 @@ export default function AdminPage() {
                                                     <div className="flex gap-2 text-xs text-muted-foreground">
                                                         <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">Deleted</Badge>
                                                         <span>Deleted on {item.deleted_at ? new Date(item.deleted_at).toLocaleDateString() : 'Unknown'}</span>
-                                                        <span>• by {item.profiles?.full_name || "Unknown"}</span>
                                                     </div>
                                                 </div>
                                             </div>
